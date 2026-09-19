@@ -32,7 +32,7 @@ export function LandingPage() {
       <section className="max-w-7xl mx-auto px-6 py-20">
         <div className="text-center max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-line bg-panel mb-6 anim-fade-up">
-            <IcSpark size={16} />
+            {/* <IcSpark size={16} /> */}
             <span className="text-sm" style={{ color: 'var(--color-acc)' }}>Professional Mockup Studio</span>
           </div>
 
