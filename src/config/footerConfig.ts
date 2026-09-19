@@ -43,6 +43,8 @@ export interface FooterConfig {
   showBuiltWith?: boolean;
 }
 
+import { siteConfig } from './siteConfig';
+
 // Get environment variable with fallback
 const getEnvVar = (key: string, fallback: string = ''): string => {
   return import.meta.env[key] || fallback;
@@ -60,51 +62,48 @@ const shouldShow = (value: string | undefined): boolean => {
   return true;
 };
 
-// Load configuration from environment variables
+// Load configuration from siteConfig and environment variables
 export const loadFooterConfig = (): FooterConfig => {
   return {
     // Company/Brand Info
-    companyName: getEnvVar('VITE_FOOTER_COMPANY_NAME', 'MockForge'),
-    tagline: getEnvVar('VITE_FOOTER_TAGLINE', 'Professional Portfolio Mockup Studio'),
-    description: getEnvVar(
-      'VITE_FOOTER_DESCRIPTION',
-      'Create stunning portfolio mockups with our advanced design editor. Professional device mockups, smart backgrounds, and instant export.'
-    ),
+    companyName: getEnvVar('VITE_FOOTER_COMPANY_NAME', siteConfig.name),
+    tagline: getEnvVar('VITE_FOOTER_TAGLINE', siteConfig.tagline),
+    description: getEnvVar('VITE_FOOTER_DESCRIPTION', siteConfig.description),
     logo: getEnvVar('VITE_FOOTER_LOGO', ''),
     
     // Contact Info
-    email: getEnvVar('VITE_FOOTER_EMAIL', ''),
-    phone: getEnvVar('VITE_FOOTER_PHONE', ''),
-    address: getEnvVar('VITE_FOOTER_ADDRESS', ''),
+    email: getEnvVar('VITE_FOOTER_EMAIL', siteConfig.contact.email),
+    phone: getEnvVar('VITE_FOOTER_PHONE', siteConfig.contact.phone),
+    address: getEnvVar('VITE_FOOTER_ADDRESS', siteConfig.contact.address),
     
     // Social Links
-    github: getEnvVar('VITE_FOOTER_GITHUB', ''),
-    linkedin: getEnvVar('VITE_FOOTER_LINKEDIN', ''),
-    twitter: getEnvVar('VITE_FOOTER_TWITTER', ''),
-    instagram: getEnvVar('VITE_FOOTER_INSTAGRAM', ''),
-    youtube: getEnvVar('VITE_FOOTER_YOUTUBE', ''),
-    portfolio: getEnvVar('VITE_FOOTER_PORTFOLIO', ''),
-    website: getEnvVar('VITE_FOOTER_WEBSITE', ''),
+    github: getEnvVar('VITE_FOOTER_GITHUB', siteConfig.social.github),
+    linkedin: getEnvVar('VITE_FOOTER_LINKEDIN', siteConfig.social.linkedin),
+    twitter: getEnvVar('VITE_FOOTER_TWITTER', siteConfig.social.twitter),
+    instagram: getEnvVar('VITE_FOOTER_INSTAGRAM', siteConfig.social.instagram),
+    youtube: getEnvVar('VITE_FOOTER_YOUTUBE', siteConfig.social.youtube),
+    portfolio: getEnvVar('VITE_FOOTER_PORTFOLIO', siteConfig.social.portfolio),
+    website: getEnvVar('VITE_FOOTER_WEBSITE', siteConfig.social.website),
     
     // Team/Creator Info
-    creatorName: getEnvVar('VITE_FOOTER_CREATOR_NAME', ''),
-    creatorRole: getEnvVar('VITE_FOOTER_CREATOR_ROLE', ''),
-    creatorPortfolio: getEnvVar('VITE_FOOTER_CREATOR_PORTFOLIO', ''),
+    creatorName: getEnvVar('VITE_FOOTER_CREATOR_NAME', siteConfig.creator.name),
+    creatorRole: getEnvVar('VITE_FOOTER_CREATOR_ROLE', siteConfig.creator.role),
+    creatorPortfolio: getEnvVar('VITE_FOOTER_CREATOR_PORTFOLIO', siteConfig.creator.portfolio),
     
     // Legal
-    privacyPolicy: getEnvVar('VITE_FOOTER_PRIVACY_POLICY', ''),
-    termsOfService: getEnvVar('VITE_FOOTER_TERMS_OF_SERVICE', ''),
-    cookiePolicy: getEnvVar('VITE_FOOTER_COOKIE_POLICY', ''),
+    privacyPolicy: getEnvVar('VITE_FOOTER_PRIVACY_POLICY', siteConfig.legal.privacyPolicy),
+    termsOfService: getEnvVar('VITE_FOOTER_TERMS_OF_SERVICE', siteConfig.legal.termsOfService),
+    cookiePolicy: getEnvVar('VITE_FOOTER_COOKIE_POLICY', siteConfig.legal.cookiePolicy),
     
     // Additional Links
-    blog: getEnvVar('VITE_FOOTER_BLOG', ''),
-    careers: getEnvVar('VITE_FOOTER_CAREERS', ''),
-    support: getEnvVar('VITE_FOOTER_SUPPORT', ''),
-    documentation: getEnvVar('VITE_FOOTER_DOCUMENTATION', ''),
+    blog: getEnvVar('VITE_FOOTER_BLOG', siteConfig.links.blog),
+    careers: getEnvVar('VITE_FOOTER_CAREERS', siteConfig.links.careers),
+    support: getEnvVar('VITE_FOOTER_SUPPORT', siteConfig.links.support),
+    documentation: getEnvVar('VITE_FOOTER_DOCUMENTATION', siteConfig.links.documentation),
     
     // Copyright
-    copyrightText: getEnvVar('VITE_FOOTER_COPYRIGHT_TEXT', ''),
-    showBuiltWith: getEnvVar('VITE_FOOTER_SHOW_BUILT_WITH', 'true') === 'true',
+    copyrightText: getEnvVar('VITE_FOOTER_COPYRIGHT_TEXT', siteConfig.footer.copyrightText),
+    showBuiltWith: getEnvVar('VITE_FOOTER_SHOW_BUILT_WITH', String(siteConfig.footer.showBuiltWith)) === 'true',
   };
 };
 
