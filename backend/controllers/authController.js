@@ -13,7 +13,15 @@ const generateOTP = () => {
 // @access  Public
 export const signup = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, password } = req.body;
+    const email = req.body.email ? req.body.email.toLowerCase().trim() : '';
+
+    if (!email || !password || !name) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name, email, and password are required'
+      });
+    }
 
     // Check if user already exists
     const userExists = await User.findOne({ email });
@@ -44,7 +52,11 @@ export const signup = async (req, res) => {
     });
 
     // Send verification email
-    await sendVerificationEmail(email, name, otp);
+    try {
+      await sendVerificationEmail(email, name, otp);
+    } catch (emailErr) {
+      console.error('⚠️ Failed to send verification email during signup:', emailErr);
+    }
 
     // Generate token
     const token = generateToken(user._id);
@@ -66,7 +78,7 @@ export const signup = async (req, res) => {
     console.error('Signup error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error during signup'
+      message: error.message || 'Server error during signup'
     });
   }
 };
@@ -76,7 +88,8 @@ export const signup = async (req, res) => {
 // @access  Public
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const email = req.body.email ? req.body.email.toLowerCase().trim() : '';
 
     // Find user with password field
     const user = await User.findOne({ email }).select('+password');
@@ -228,7 +241,14 @@ export const resendOTP = async (req, res) => {
 // @access  Public
 export const forgotPassword = async (req, res) => {
   try {
-    const { email } = req.body;
+    const email = req.body.email ? req.body.email.toLowerCase().trim() : '';
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
 
     const user = await User.findOne({ email });
 

@@ -2,14 +2,36 @@ import nodemailer from 'nodemailer';
 
 // Create transporter
 const createTransporter = () => {
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+
+  if (!user || !pass) {
+    console.warn('⚠️ SMTP_USER or SMTP_PASS environment variables are missing!');
+  }
+
+  // If host is explicitly provided and not gmail, use custom SMTP host
+  if (process.env.SMTP_HOST && !process.env.SMTP_HOST.includes('gmail')) {
+    return nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT, 10) || 587,
+      secure: process.env.SMTP_SECURE === 'true' || process.env.SMTP_PORT === '465',
+      auth: { user, pass },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+  }
+
+  // Default to Gmail service with TLS settings
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT) || 587,
-    secure: process.env.SMTP_SECURE === 'true',
+    service: 'gmail',
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+      user,
+      pass,
     },
+    tls: {
+      rejectUnauthorized: false
+    }
   });
 };
 
@@ -205,48 +227,52 @@ const getPasswordResetTemplate = (name, otp) => {
 // Get formatted sender address
 const getFromAddress = () => {
   const name = process.env.SMTP_FROM_NAME || 'MockForge-Developers';
-  const email = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || 'noreply@mockforge.com';
+  const email = process.env.SMTP_USER || process.env.SMTP_FROM_EMAIL || 'noreply@mockforge.com';
   return `"${name}" <${email}>`;
 };
 
 // Send verification email
 export const sendVerificationEmail = async (email, name, otp) => {
   const transporter = createTransporter();
+  const from = getFromAddress();
 
   const mailOptions = {
-    from: getFromAddress(),
+    from,
     to: email,
     subject: 'Verify Your Email - MockForge',
     html: getEmailVerificationTemplate(name, otp),
   };
 
   try {
-    await transporter.sendMail(mailOptions);
-    console.log(`✅ Verification email sent to ${email}`);
-    return { success: true };
+    console.log(`📧 Sending verification email to ${email} from ${from}...`);
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✅ Verification email sent to ${email}, messageId: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('❌ Error sending verification email:', error);
-    throw new Error('Failed to send verification email');
+    console.error(`❌ Error sending verification email to ${email}:`, error);
+    throw new Error(`Failed to send verification email: ${error.message}`);
   }
 };
 
 // Send password reset email
 export const sendPasswordResetEmail = async (email, name, otp) => {
   const transporter = createTransporter();
+  const from = getFromAddress();
 
   const mailOptions = {
-    from: getFromAddress(),
+    from,
     to: email,
     subject: 'Reset Your Password - MockForge',
     html: getPasswordResetTemplate(name, otp),
   };
 
   try {
-    await transporter.sendMail(mailOptions);
-    console.log(`✅ Password reset email sent to ${email}`);
-    return { success: true };
+    console.log(`📧 Sending password reset email to ${email} from ${from}...`);
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✅ Password reset email sent to ${email}, messageId: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('❌ Error sending password reset email:', error);
-    throw new Error('Failed to send password reset email');
+    console.error(`❌ Error sending password reset email to ${email}:`, error);
+    throw new Error(`Failed to send password reset email: ${error.message}`);
   }
 };
