@@ -202,12 +202,19 @@ const getPasswordResetTemplate = (name, otp) => {
   `;
 };
 
+// Get formatted sender address
+const getFromAddress = () => {
+  const name = process.env.SMTP_FROM_NAME || 'MockForge Developers';
+  const email = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || 'noreply@mockforge.com';
+  return `"${name}" <${email}>`;
+};
+
 // Send verification email
 export const sendVerificationEmail = async (email, name, otp) => {
   const transporter = createTransporter();
   
   const mailOptions = {
-    from: `"${process.env.SMTP_FROM_NAME}" <${process.env.SMTP_FROM_EMAIL}>`,
+    from: getFromAddress(),
     to: email,
     subject: 'Verify Your Email - MockForge',
     html: getEmailVerificationTemplate(name, otp),
@@ -228,7 +235,7 @@ export const sendPasswordResetEmail = async (email, name, otp) => {
   const transporter = createTransporter();
   
   const mailOptions = {
-    from: `"${process.env.SMTP_FROM_NAME}" <${process.env.SMTP_FROM_EMAIL}>`,
+    from: getFromAddress(),
     to: email,
     subject: 'Reset Your Password - MockForge',
     html: getPasswordResetTemplate(name, otp),
