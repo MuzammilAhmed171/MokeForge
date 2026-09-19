@@ -1,9 +1,10 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useStudio } from '../store';
 import { LogoMark, IcPlus, IcFolder, IcStar, IcSettings, IcLogout } from '../icons';
 
 export function DashboardPage() {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const projects = useStudio(s => s.projects);
   const loadingProjects = useStudio(s => s.loadingProjects);
@@ -12,8 +13,7 @@ export function DashboardPage() {
 
   const handleCreateProject = async () => {
     await createProject('Untitled Project', 'Website', 1600, 1000);
-    // Navigate directly to editor after creating project
-    window.location.href = '/editor';
+    navigate('/editor');
   };
 
   const handleLogout = () => {
@@ -119,7 +119,7 @@ export function DashboardPage() {
                   key={project.id}
                   onClick={async () => {
                     await openProject(project.id);
-                    window.location.href = '/editor';
+                    navigate('/editor');
                   }}
                   className="card card-hover overflow-hidden text-left"
                 >

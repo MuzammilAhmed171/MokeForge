@@ -34,18 +34,28 @@ function AppContent() {
 }
 
 function EditorRoute() {
-  const goto = useStudio(s => s.goto);
-  const openProject = useStudio(s => s.openProject);
+  const booted = useStudio(s => s.booted);
+  const boot = useStudio(s => s.boot);
+  const project = useStudio(s => s.project);
   const projects = useStudio(s => s.projects);
+  const openProject = useStudio(s => s.openProject);
   
-  // If no projects, redirect to dashboard
-  if (projects.length === 0) {
+  useEffect(() => {
+    boot();
+  }, [boot]);
+
+  // Only open first project once on mount if no project is currently open in editor
+  useEffect(() => {
+    if (booted && !project && projects.length > 0) {
+      openProject(projects[0].id);
+    }
+  }, [booted, project, projects, openProject]);
+
+  if (!booted) return null;
+
+  // If no projects exist at all, redirect to dashboard
+  if (projects.length === 0 && !project) {
     return <Navigate to="/dashboard" replace />;
-  }
-  
-  // Open first project
-  if (projects.length > 0) {
-    openProject(projects[0].id);
   }
   
   return <AppContent />;

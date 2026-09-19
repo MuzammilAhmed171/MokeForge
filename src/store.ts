@@ -1041,12 +1041,19 @@ export const useStudio = create<StudioState>((set, get) => ({
           ? get().projects.map(x => x.id === project.id ? updatedProject : x)
           : [updatedProject, ...get().projects];
         
-        set(s => ({ projects: next, dirty: false, savedAt: Date.now(), saving: false, project: s.project ? { ...updatedProject } : null }));
+        // Preserve active in-memory project edits, do not overwrite with stale snapshot
+        set(s => ({
+          projects: next,
+          dirty: false,
+          savedAt: Date.now(),
+          saving: false,
+          project: s.project ? { ...s.project, thumbnail: updatedProject.thumbnail || s.project.thumbnail } : null
+        }));
         if (!silent) get().toast('Project saved');
       }
     } catch (error) {
       set({ saving: false });
-      get().toast('Failed to save project', 'err');
+      if (!silent) get().toast('Failed to save project', 'err');
     }
   },
 
