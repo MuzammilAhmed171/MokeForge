@@ -253,10 +253,9 @@ export const forgotPassword = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      // Don't reveal if user exists
-      return res.json({
-        success: true,
-        message: 'If an account exists with this email, a reset code has been sent.'
+      return res.status(404).json({
+        success: false,
+        message: 'No account found with this email address'
       });
     }
 
@@ -276,11 +275,19 @@ export const forgotPassword = async (req, res) => {
     });
 
     // Send email
-    await sendPasswordResetEmail(email, user.name, otp);
+    try {
+      await sendPasswordResetEmail(email, user.name, otp);
+    } catch (emailErr) {
+      console.error('Failed to send password reset email:', emailErr);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to send reset code email. Please check your email configuration.'
+      });
+    }
 
     res.json({
       success: true,
-      message: 'If an account exists with this email, a reset code has been sent.'
+      message: 'Password reset code sent to your email.'
     });
   } catch (error) {
     console.error('Forgot password error:', error);
