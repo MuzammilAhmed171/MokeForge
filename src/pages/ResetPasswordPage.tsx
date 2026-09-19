@@ -21,6 +21,7 @@ export function ResetPasswordPage() {
   const navigate = useNavigate();
   const { resetPassword, isLoading, error, clearError } = useAuth();
   
+  const [email, setEmail] = useState(() => sessionStorage.getItem('resetEmail') || '');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -73,6 +74,10 @@ export function ResetPasswordPage() {
     e.preventDefault();
     clearError();
 
+    if (!email.trim()) {
+      return;
+    }
+
     const otpString = otp.join('');
     if (otpString.length !== 6) {
       return;
@@ -83,7 +88,7 @@ export function ResetPasswordPage() {
     }
 
     try {
-      await resetPassword(otpString, newPassword);
+      await resetPassword(email.trim(), otpString, newPassword);
       setSuccess(true);
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
@@ -122,7 +127,9 @@ export function ResetPasswordPage() {
             <span className="text-2xl font-bold" style={{ fontFamily: 'var(--font-disp)' }}>MockForge</span>
           </Link>
           <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'var(--font-disp)' }}>Reset Password</h1>
-          <p style={{ color: 'var(--color-mut)' }}>Enter the code and your new password</p>
+          <p style={{ color: 'var(--color-mut)' }}>
+            {email ? `Reset code sent to ${email}` : 'Enter your email, reset code, and new password'}
+          </p>
         </div>
 
         {/* Form */}
@@ -133,6 +140,19 @@ export function ResetPasswordPage() {
               {error}
             </div>
           )}
+
+          {/* Email input if not available in session or editable */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Account Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="input"
+              placeholder="you@example.com"
+              required
+            />
+          </div>
 
           {/* OTP */}
           <div>

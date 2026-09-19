@@ -271,6 +271,62 @@ export const forgotPassword = async (req, res) => {
   }
 };
 
+// @desc    Verify reset OTP
+// @route   POST /api/auth/verify-reset-otp
+// @access  Public
+export const verifyResetOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and OTP code are required'
+      });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'No account found with this email'
+      });
+    }
+
+    const otpRecord = await OTP.findOne({
+      user: user._id,
+      type: 'password-reset',
+      otp: otp.toString().trim()
+    });
+
+    if (!otpRecord) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid verification code'
+      });
+    }
+
+    if (otpRecord.expiresAt < new Date()) {
+      await OTP.deleteOne({ _id: otpRecord._id });
+      return res.status(400).json({
+        success: false,
+        message: 'Code has expired. Please request a new code.'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Code verified successfully'
+    });
+  } catch (error) {
+    console.error('Verify reset OTP error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during code verification'
+    });
+  }
+};
+
 // @desc    Reset password
 // @route   POST /api/auth/reset-password
 // @access  Public
@@ -278,12 +334,19 @@ export const resetPassword = async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
 
-    const user = await User.findOne({ email });
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email, OTP, and new password are required'
+      });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
 
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid request'
+        message: 'Account not found'
       });
     }
 
@@ -291,13 +354,13 @@ export const resetPassword = async (req, res) => {
     const otpRecord = await OTP.findOne({
       user: user._id,
       type: 'password-reset',
-      otp
+      otp: otp.toString().trim()
     });
 
     if (!otpRecord) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid OTP'
+        message: 'Invalid or expired OTP code'
       });
     }
 

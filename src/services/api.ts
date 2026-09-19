@@ -60,6 +60,12 @@ export const authAPI = {
       body: JSON.stringify({ email }),
     }),
 
+  verifyResetOTP: (email: string, otp: string) =>
+    apiCall('/auth/verify-reset-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp }),
+    }),
+
   resetPassword: (email: string, otp: string, newPassword: string) =>
     apiCall('/auth/reset-password', {
       method: 'POST',

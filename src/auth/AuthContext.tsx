@@ -24,7 +24,8 @@ interface AuthContextType extends AuthState {
   verifyEmail: (otp: string) => Promise<void>;
   resendOTP: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
-  resetPassword: (otp: string, newPassword: string) => Promise<void>;
+  verifyResetOTP: (email: string, otp: string) => Promise<void>;
+  resetPassword: (email: string, otp: string, newPassword: string) => Promise<void>;
   clearError: () => void;
   updateProfile: (data: Partial<User>) => void;
 }
@@ -162,6 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
+      sessionStorage.setItem('resetEmail', email);
       const response = await authAPI.forgotPassword(email);
       
       if (!response.success) {
@@ -176,20 +178,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const resetPassword = async (otp: string, newPassword: string) => {
+  const verifyResetOTP = async (email: string, otp: string) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      if (!user) {
-        throw new Error('User not found');
-      }
+      const response = await authAPI.verifyResetOTP(email, otp);
       
-      const response = await authAPI.resetPassword(user.email, otp, newPassword);
+      if (!response.success) {
+        throw new Error(response.message || 'Invalid verification code');
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Invalid verification code';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resetPassword = async (email: string, otp: string, newPassword: string) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await authAPI.resetPassword(email, otp, newPassword);
       
       if (!response.success) {
         throw new Error(response.message || 'Failed to reset password');
       }
+      sessionStorage.removeItem('resetEmail');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to reset password';
       setError(errorMessage);
@@ -223,6 +241,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         verifyEmail,
         resendOTP,
         forgotPassword,
+        verifyResetOTP,
         resetPassword,
         clearError,
         updateProfile,

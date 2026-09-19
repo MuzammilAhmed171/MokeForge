@@ -35,18 +35,18 @@ export function LandingPage() {
             <IcSpark size={16} />
             <span className="text-sm" style={{ color: 'var(--color-acc)' }}>Professional Mockup Studio</span>
           </div>
-          
+
           <h1 className="text-6xl font-bold mb-6 anim-fade-up" style={{ fontFamily: 'var(--font-disp)', animationDelay: '0.1s' }}>
             Create Stunning<br />
             <span style={{ color: 'var(--color-acc)' }}>Portfolio Mockups</span><br />
             in Minutes
           </h1>
-          
+
           <p className="text-xl mb-8 anim-fade-up" style={{ color: 'var(--color-mut)', animationDelay: '0.2s' }}>
-            Professional device mockups, advanced design editor, smart layouts, and instant export. 
+            Professional device mockups, advanced design editor, smart layouts, and instant export.
             Everything you need to showcase your work beautifully.
           </p>
-          
+
           <div className="flex items-center justify-center gap-4 anim-fade-up" style={{ animationDelay: '0.3s' }}>
             <Link to="/signup" className="btn btn-acc !px-8 !py-3 !text-base">
               Start Creating Free

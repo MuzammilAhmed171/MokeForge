@@ -5,6 +5,7 @@ import {
   verifyEmail,
   resendOTP,
   forgotPassword,
+  verifyResetOTP,
   resetPassword,
   getMe,
   updateProfile,
@@ -18,6 +19,7 @@ const router = express.Router();
 router.post('/signup', signup);
 router.post('/login', login);
 router.post('/forgot-password', forgotPassword);
+router.post('/verify-reset-otp', verifyResetOTP);
 router.post('/reset-password', resetPassword);
 
 // Protected routes
