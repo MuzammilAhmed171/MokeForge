@@ -9,7 +9,7 @@ export const siteConfig = {
   tagline: 'Professional Portfolio Mockup Studio',
   description: 'Create stunning portfolio mockups with our advanced design editor. Professional device mockups, smart backgrounds, and instant export.',
   url: 'https://mockforge.vercel.app',
-  
+
   // Contact info
   contact: {
     email: 'support@mockforge.com',
@@ -19,20 +19,20 @@ export const siteConfig = {
 
   // Social Media Links
   social: {
-    github: 'https://github.com/MuzammilAhmed171/MokeForge',
+    github: '',
     linkedin: '',
     twitter: '',
     instagram: '',
     youtube: '',
-    portfolio: '',
-    website: '',
+    portfolio: 'https://muzammilahmed25.vercel.app',
+    website: 'https://muzammilahmed25.vercel.app',
   },
 
   // Creator / Developer Info
   creator: {
-    name: 'Muzammil Ahmed',
+    name: 'M3H-Developers',
     role: 'Full Stack Developer & Designer',
-    portfolio: '',
+    portfolio: 'https://muzammilahmed25.vercel.app',
   },
 
   // Legal & Policy Links
