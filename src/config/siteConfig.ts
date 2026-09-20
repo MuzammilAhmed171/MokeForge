@@ -25,7 +25,7 @@ export const siteConfig = {
     instagram: '',
     youtube: '',
     portfolio: 'https://muzammilahmed25.vercel.app',
-    website: 'https://muzammilahmed25.vercel.app',
+    website: '',
   },
 
   // Creator / Developer Info
