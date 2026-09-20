@@ -1,0 +1,17 @@
+{
+  "name": "MOKE FORGE — Portfolio & Website Mockup Generator",
+  "short_name": "MOKE FORGE",
+  "description": "Professional device mockup generator for portfolio websites, screenshots, and UI/UX presentations.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c0d10",
+  "theme_color": "#0c0d10",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

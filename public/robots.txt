@@ -1,0 +1,19 @@
+# robots.txt for MOKE FORGE
+# https://mokeforge.vercel.app/
+
+User-agent: *
+Allow: /
+Allow: /assets/
+Allow: /favicon.svg
+Allow: /site.webmanifest
+Allow: /llms.txt
+
+# Disallow private application & backend endpoints
+Disallow: /dashboard
+Disallow: /editor
+Disallow: /profile
+Disallow: /verify-email
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://mokeforge.vercel.app/sitemap.xml

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { LogoMark, IcEye, IcEyeOff, IcSpin } from '../icons';
+import { SEOHead } from '../components/SEOHead';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -26,12 +27,17 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen bg-ink flex items-center justify-center px-6">
+      <SEOHead
+        title="Log In — MOKE FORGE | Portfolio Mockup Studio"
+        description="Log in to your MOKE FORGE account to create and manage professional portfolio website and device mockups."
+        canonicalUrl="https://mokeforge.vercel.app/login"
+      />
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-4">
             <LogoMark size={40} />
-            <span className="text-2xl font-bold" style={{ fontFamily: 'var(--font-disp)' }}>MockForge</span>
+            <span className="text-2xl font-bold" style={{ fontFamily: 'var(--font-disp)' }}>MOKE FORGE</span>
           </Link>
           <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'var(--font-disp)' }}>Welcome Back</h1>
           <p style={{ color: 'var(--color-mut)' }}>Log in to your account</p>

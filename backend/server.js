@@ -29,6 +29,12 @@ app.use(helmet({
   crossOriginResourcePolicy: false,
 }));
 
+// Prevent search engine indexation of raw JSON API endpoints
+app.use('/api', (req, res, next) => {
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  next();
+});
+
 // Rate limiting (skip in development)
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
