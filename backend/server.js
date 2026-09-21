@@ -29,8 +29,8 @@ app.use(helmet({
   crossOriginResourcePolicy: false,
 }));
 
-// Prevent search engine indexation of raw JSON API endpoints
-app.use('/api', (req, res, next) => {
+// Prevent search engine indexation of backend endpoints
+app.use((req, res, next) => {
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   next();
 });

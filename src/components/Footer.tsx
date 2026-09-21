@@ -22,7 +22,7 @@ export function Footer() {
             <div className="flex items-center gap-3">
               <LogoMark size={34} />
               <span className="text-2xl font-bold" style={{ fontFamily: 'var(--font-disp)' }}>
-                {config.companyName || 'MOKE FORGE'}
+                {config.companyName || 'MOCK FORGE'}
               </span>
             </div>
             
@@ -177,7 +177,7 @@ export function Footer() {
               {isFieldVisible(config.copyrightText) ? (
                 <span>{config.copyrightText}</span>
               ) : (
-                <span>© {currentYear} {config.companyName || 'MOKE FORGE'}. All rights reserved.</span>
+                <span>© {currentYear} {config.companyName || 'MOCK FORGE'}. All rights reserved.</span>
               )}
             </div>
 

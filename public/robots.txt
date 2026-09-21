@@ -1,5 +1,5 @@
-# robots.txt for MOKE FORGE
-# https://mokeforge.vercel.app/
+# robots.txt for MOCK FORGE
+# https://mockforge-canvas.vercel.app/
 
 User-agent: *
 Allow: /
@@ -16,4 +16,4 @@ Disallow: /verify-email
 Disallow: /api/
 
 # Sitemap location
-Sitemap: https://mokeforge.vercel.app/sitemap.xml
+Sitemap: https://mockforge-canvas.vercel.app/sitemap.xml

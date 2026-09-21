@@ -5,10 +5,10 @@
  */
 
 export const siteConfig = {
-  name: 'MOKE FORGE',
+  name: 'MOCK FORGE',
   tagline: 'Professional Portfolio & Website Mockup Generator',
   description: 'Create stunning portfolio mockups from website screenshots in minutes. Professional laptop, tablet, mobile device frames, smart backgrounds, and instant high-res export.',
-  url: 'https://mokeforge.vercel.app',
+  url: 'https://mockforge-canvas.vercel.app',
 
   // Contact info
   contact: {
@@ -25,7 +25,7 @@ export const siteConfig = {
     instagram: '',
     youtube: '',
     portfolio: 'https://muzammilahmed25.vercel.app',
-    website: 'https://mokeforge.vercel.app',
+    website: 'https://mockforge-canvas.vercel.app',
   },
 
   // Creator / Developer Info
@@ -53,7 +53,7 @@ export const siteConfig = {
   // Footer Options
   footer: {
     showBuiltWith: true,
-    copyrightText: '© 2026 MOKE FORGE. All rights reserved.',
+    copyrightText: '© 2026 MOCK FORGE. All rights reserved.',
   }
 };
 

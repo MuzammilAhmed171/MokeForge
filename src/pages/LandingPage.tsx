@@ -7,20 +7,20 @@ import { SEOHead } from '../components/SEOHead';
 
 const faqs = [
   {
-    q: 'What is MOKE FORGE?',
-    a: 'MOKE FORGE is a professional web-based mockup generator built for developers, UI/UX designers, and digital creators. It allows you to transform website screenshots and application designs into high-quality device mockups in seconds without requiring complex design software.',
+    q: 'What is MOCK FORGE?',
+    a: 'MOCK FORGE is a professional web-based mockup generator built for developers, UI/UX designers, and digital creators. It allows you to transform website screenshots and application designs into high-quality device mockups in seconds without requiring complex design software.',
   },
   {
     q: 'How do I create a website portfolio mockup from a screenshot?',
     a: 'Simply upload your website screenshot, choose from our collection of laptop, tablet, phone, or browser frames, customize the background and layout using the drag-and-drop editor, and export your high-resolution mockup with a single click.',
   },
   {
-    q: 'Which device frames are supported in MOKE FORGE?',
-    a: 'MOKE FORGE features 125+ realistic device frames including modern laptops (MacBook & ultrabooks), smartphones (iPhone & Android), tablets (iPad), Safari/Chrome browser windows, and desktop monitors.',
+    q: 'Which device frames are supported in MOCK FORGE?',
+    a: 'MOCK FORGE features 125+ realistic device frames including modern laptops (MacBook & ultrabooks), smartphones (iPhone & Android), tablets (iPad), Safari/Chrome browser windows, and desktop monitors.',
   },
   {
-    q: 'Do I need Photoshop, Figma, or design software to use MOKE FORGE?',
-    a: 'No. MOKE FORGE runs entirely in your web browser. You get an intuitive visual canvas with smart alignment guides, layering, angle controls, procedural backgrounds, and instant rendering with zero installation required.',
+    q: 'Do I need Photoshop, Figma, or design software to use MOCK FORGE?',
+    a: 'No. MOCK FORGE runs entirely in your web browser. You get an intuitive visual canvas with smart alignment guides, layering, angle controls, procedural backgrounds, and instant rendering with zero installation required.',
   },
   {
     q: 'Can I export mockups with transparent backgrounds and high resolution?',
@@ -48,9 +48,9 @@ export function LandingPage() {
   return (
     <div className="min-h-screen bg-ink">
       <SEOHead
-        title="MOKE FORGE — Portfolio & Website Mockup Generator"
+        title="MOCK FORGE — Portfolio & Website Mockup Generator"
         description="Create stunning portfolio mockups from website screenshots in minutes. Professional laptop, tablet, and mobile device frames, smart backgrounds, and instant high-res export."
-        canonicalUrl="https://mokeforge.vercel.app/"
+        canonicalUrl="https://mockforge-canvas.vercel.app/"
         schemaJson={faqSchema}
       />
 
@@ -60,7 +60,7 @@ export function LandingPage() {
           <div className="flex items-center gap-2">
             <LogoMark size={32} />
             <span className="text-xl font-bold" style={{ fontFamily: 'var(--font-disp)' }}>
-              MOKE FORGE
+              MOCK FORGE
             </span>
           </div>
           <nav className="flex items-center gap-4" aria-label="Main Navigation">
@@ -225,7 +225,7 @@ export function LandingPage() {
               Frequently Asked Questions
             </h2>
             <p className="text-lg" style={{ color: 'var(--color-mut)' }}>
-              Everything you need to know about creating mockups with MOKE FORGE
+              Everything you need to know about creating mockups with MOCK FORGE
             </p>
           </div>
 
@@ -278,7 +278,7 @@ export function LandingPage() {
               Ready to Create Amazing Portfolio Mockups?
             </h2>
             <p className="text-lg mb-8" style={{ color: 'var(--color-mut)' }}>
-              Join thousands of developers, UI/UX designers, and creators using MOKE FORGE to elevate their project showcases.
+              Join thousands of developers, UI/UX designers, and creators using MOCK FORGE to elevate their project showcases.
             </p>
             <Link to="/signup" className="btn btn-acc !px-8 !py-3 !text-base">
               Get Started Free

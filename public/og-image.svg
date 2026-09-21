@@ -35,7 +35,7 @@
     </g>
 
     <!-- Brand Name -->
-    <text x="64" y="33" fill="#ffffff" font-family="Space Grotesk, -apple-system, sans-serif" font-size="34" font-weight="700" letter-spacing="1">MOKE FORGE</text>
+    <text x="64" y="33" fill="#ffffff" font-family="Space Grotesk, -apple-system, sans-serif" font-size="34" font-weight="700" letter-spacing="1">MOCK FORGE</text>
 
     <!-- Tagline Badge -->
     <rect x="0" y="70" width="280" height="34" rx="17" fill="#181a22" stroke="#2a2e3d" stroke-width="1.5" />
@@ -51,7 +51,7 @@
     <text x="0" y="390" fill="#9ca3af" font-family="-apple-system, sans-serif" font-size="20" font-weight="400">Laptops, mobile phones, tablets, browsers &amp; monitors.</text>
 
     <!-- Website URL -->
-    <text x="0" y="445" fill="#45d6c8" font-family="JetBrains Mono, monospace" font-size="16" font-weight="500">https://mokeforge.vercel.app</text>
+    <text x="0" y="445" fill="#45d6c8" font-family="JetBrains Mono, monospace" font-size="16" font-weight="500">https://mockforge-canvas.vercel.app</text>
   </g>
 
   <!-- Right Side: Device Frame Visual -->

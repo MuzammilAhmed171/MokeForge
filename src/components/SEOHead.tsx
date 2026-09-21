@@ -10,10 +10,10 @@ interface SEOHeadProps {
 }
 
 export function SEOHead({
-  title = 'MOKE FORGE — Portfolio & Website Mockup Generator',
+  title = 'MOCK FORGE — Portfolio & Website Mockup Generator',
   description = 'Create stunning portfolio mockups from website screenshots in minutes. Professional laptop, tablet, and mobile device frames, smart backgrounds, and instant high-res export.',
-  canonicalUrl = 'https://mokeforge.vercel.app/',
-  ogImage = 'https://mokeforge.vercel.app/og-image.svg',
+  canonicalUrl = 'https://mockforge-canvas.vercel.app/',
+  ogImage = 'https://mockforge-canvas.vercel.app/og-image.svg',
   ogType = 'website',
   schemaJson = null,
 }: SEOHeadProps) {

@@ -1,9 +1,9 @@
-# MOKE FORGE
+# MOCK FORGE
 
 > Professional Portfolio & Website Mockup Generator
 
 ## Overview
-MOKE FORGE (https://mokeforge.vercel.app/) is a modern web application designed for developers, UI/UX designers, agencies, and creators to transform website screenshots and application designs into professional portfolio mockups.
+MOCK FORGE (https://mockforge-canvas.vercel.app/) is a modern web application designed for developers, UI/UX designers, agencies, and creators to transform website screenshots and application designs into professional portfolio mockups.
 
 ## Core Capabilities
 - **Device Mockup Frames**: Realistic laptops, smartphones, tablets, browsers, and desktop monitors with 125+ customizable models.
@@ -20,5 +20,5 @@ MOKE FORGE (https://mokeforge.vercel.app/) is a modern web application designed 
 - Responsive Website Presentation Studio
 
 ## Canonical URLs
-- Homepage: https://mokeforge.vercel.app/
-- Web App Studio: https://mokeforge.vercel.app/
+- Homepage: https://mockforge-canvas.vercel.app/
+- Web App Studio: https://mockforge-canvas.vercel.app/

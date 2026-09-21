@@ -51,16 +51,16 @@ export function SignupPage() {
   return (
     <div className="min-h-screen bg-ink flex items-center justify-center px-6 py-12">
       <SEOHead
-        title="Create Free Account — MOKE FORGE | Portfolio Mockup Studio"
-        description="Sign up for MOKE FORGE to start creating stunning, high-resolution website and device mockups for your portfolio."
-        canonicalUrl="https://mokeforge.vercel.app/signup"
+        title="Create Free Account — MOCK FORGE | Portfolio Mockup Studio"
+        description="Sign up for MOCK FORGE to start creating stunning, high-resolution website and device mockups for your portfolio."
+        canonicalUrl="https://mockforge-canvas.vercel.app/signup"
       />
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-4">
             <LogoMark size={40} />
-            <span className="text-2xl font-bold" style={{ fontFamily: 'var(--font-disp)' }}>MOKE FORGE</span>
+            <span className="text-2xl font-bold" style={{ fontFamily: 'var(--font-disp)' }}>MOCK FORGE</span>
           </Link>
           <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'var(--font-disp)' }}>Create Account</h1>
           <p style={{ color: 'var(--color-mut)' }}>Start creating professional mockups</p>
