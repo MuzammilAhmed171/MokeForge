@@ -9,8 +9,9 @@ import { loadDemoAssets } from '../sampleScreens';
 import { Section } from './ui';
 import {
   IcBrowser, IcDevice, IcImage, IcLaptop, IcMonitor, IcPhone, IcPlus, IcRefresh, IcSpark,
-  IcSpin, IcTablet, IcTrash, IcUpload, IcCopy, IcSearch, IcBg, IcGrid, IcType,
+  IcSpin, IcTablet, IcTrash, IcUpload, IcCopy, IcSearch, IcBg, IcGrid, IcType, IcGlobe, IcArrowR,
 } from '../icons';
+import { UrlCaptureModal } from './UrlCaptureModal';
 import { IMAGE_ASSETS, searchImages } from '../imageAssets';
 import { ICONS, searchIcons } from '../iconLibrary';
 
@@ -160,6 +161,7 @@ function ScreensTab() {
   const [dragging, setDragging] = useState(false);
   const [loadingDemo, setLoadingDemo] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
+  const [urlModalOpen, setUrlModalOpen] = useState(false);
 
   const onDrop = (e: DragEvent) => {
     e.preventDefault();
@@ -170,8 +172,34 @@ function ScreensTab() {
   return (
     <>
       <div className="p-3">
+        {/* Advanced Auto-Capture from URL Button */}
+        <button
+          onClick={() => setUrlModalOpen(true)}
+          className="w-full mb-2.5 px-3 py-2.5 rounded-xl border border-acc/40 bg-gradient-to-r from-acc/15 via-acc2/10 to-transparent hover:from-acc/25 hover:via-acc2/20 hover:to-acc/10 transition-all flex items-center justify-between group cursor-pointer shadow-[0_4px_18px_rgba(255,107,61,0.14)] relative overflow-hidden"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-acc/20 border border-acc/30 flex items-center justify-center text-acc shrink-0 group-hover:scale-110 transition-transform">
+              <IcGlobe size={15} />
+            </div>
+            <div className="text-left min-w-0">
+              <div className="text-[12px] font-bold text-fg flex items-center gap-1.5 truncate">
+                <span>Capture from URL</span>
+                <span className="text-[8.5px] font-mono uppercase px-1.5 py-0.2 rounded-full bg-acc text-white font-extrabold tracking-wide">
+                  Auto
+                </span>
+              </div>
+              <div className="text-[9.5px] text-mut font-mono truncate">
+                Live Desktop, Mobile & Tablet
+              </div>
+            </div>
+          </div>
+          <span className="text-mut group-hover:text-acc group-hover:translate-x-0.5 transition-all shrink-0">
+            <IcArrowR size={13} />
+          </span>
+        </button>
+
         <div
-          className="transition-all duration-150 cursor-pointer text-center py-5 px-3"
+          className="transition-all duration-150 cursor-pointer text-center py-4 px-3"
           style={{
             border: `1.5px dashed ${dragging ? 'var(--color-acc)' : 'var(--color-line)'}`,
             borderRadius: 10,
@@ -182,11 +210,11 @@ function ScreensTab() {
           onDragLeave={() => setDragging(false)}
           onDrop={onDrop}
         >
-          <IcUpload size={18} />
-          <div className="text-[12px] font-medium mt-1.5" style={{ color: dragging ? 'var(--color-acc)' : 'var(--color-fg)' }}>
+          <IcUpload size={17} />
+          <div className="text-[11.5px] font-medium mt-1" style={{ color: dragging ? 'var(--color-acc)' : 'var(--color-fg)' }}>
             {dragging ? 'Drop to add' : 'Drop screenshots'}
           </div>
-          <div className="text-[10px] mt-0.5" style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-dim)' }}>
+          <div className="text-[9.5px] mt-0.5" style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-dim)' }}>
             browse · Ctrl+V · drag onto a device
           </div>
           <input
@@ -218,6 +246,8 @@ function ScreensTab() {
           </button>
         </div>
       </div>
+
+      <UrlCaptureModal open={urlModalOpen} onClose={() => setUrlModalOpen(false)} />
 
       <Section title={`Screenshots · ${project.assets.length}`}>
         {project.assets.length === 0 && (
