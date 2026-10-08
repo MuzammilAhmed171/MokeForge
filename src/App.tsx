@@ -47,10 +47,12 @@ function EditorRoute() {
 
   // Only open first project once on mount if no project is currently open in editor
   useEffect(() => {
-    if (booted && !project && projects.length > 0) {
-      openProject(projects[0].id);
-    } else if (booted && !project && projects.length === 0) {
-      createProject('My Portfolio Showcase', 'Portfolio', 1600, 1000);
+    if (booted && !project) {
+      if (projects.length > 0) {
+        openProject(projects[0].id);
+      } else {
+        createProject('Untitled Project', 'Website', 1600, 1000);
+      }
     }
   }, [booted, project, projects, openProject, createProject]);
 

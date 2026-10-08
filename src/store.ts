@@ -378,25 +378,34 @@ export const useStudio = create<StudioState>((set, get) => ({
 
     // If authenticated:
     if (token) {
-      // 1. Check if there was an unsynced guest project created before logging in / signing up
-      const guestRaw = localStorage.getItem('mockforge_guest_project');
-      if (guestRaw) {
+      // 1. Check if there are unsynced guest projects created before logging in / signing up
+      const guestProjectsRaw = localStorage.getItem('mockforge_guest_projects');
+      const legacyRaw = localStorage.getItem('mockforge_guest_project');
+      let guestListToSync: Project[] = [];
+
+      if (guestProjectsRaw) {
         try {
-          const guestProject = migrate(JSON.parse(guestRaw));
-          const { _id, ...cleanProject } = guestProject as any;
-          const syncRes = await projectsAPI.create(cleanProject);
-          if (syncRes.success) {
-            localStorage.removeItem('mockforge_guest_project');
-            const savedProject = migrate(syncRes.project);
-            get().toast('Your guest design was saved to your account!', 'ok');
-            set(s => ({
-              project: savedProject,
-              projects: [savedProject, ...s.projects.filter(p => p.id !== savedProject.id)],
-              isGuest: false
-            }));
+          const parsed = JSON.parse(guestProjectsRaw);
+          if (Array.isArray(parsed)) guestListToSync = parsed.map(p => migrate(p));
+        } catch {}
+      } else if (legacyRaw) {
+        try {
+          const single = migrate(JSON.parse(legacyRaw));
+          if (single) guestListToSync = [single];
+        } catch {}
+      }
+
+      if (guestListToSync.length > 0) {
+        try {
+          for (const gp of guestListToSync) {
+            const { _id, ...cleanProject } = gp as any;
+            await projectsAPI.create(cleanProject);
           }
+          localStorage.removeItem('mockforge_guest_projects');
+          localStorage.removeItem('mockforge_guest_project');
+          get().toast('Your guest designs were saved to your account!', 'ok');
         } catch (syncErr) {
-          console.warn('Could not auto-sync guest project:', syncErr);
+          console.warn('Could not auto-sync guest projects:', syncErr);
         }
       }
 
@@ -423,28 +432,34 @@ export const useStudio = create<StudioState>((set, get) => ({
 
     // Guest Mode (unauthenticated):
     try {
-      const guestRaw = localStorage.getItem('mockforge_guest_project');
-      let guestProject: Project;
-      if (guestRaw) {
-        guestProject = migrate(JSON.parse(guestRaw));
-      } else {
-        guestProject = makeDefaultProject('My Portfolio Showcase', 'Portfolio', 1600, 1000);
+      const guestProjectsRaw = localStorage.getItem('mockforge_guest_projects');
+      const legacyRaw = localStorage.getItem('mockforge_guest_project');
+      let guestList: Project[] = [];
+
+      if (guestProjectsRaw) {
         try {
-          localStorage.setItem('mockforge_guest_project', JSON.stringify(guestProject));
+          const parsed = JSON.parse(guestProjectsRaw);
+          if (Array.isArray(parsed)) {
+            guestList = parsed.map(p => migrate(p));
+          }
+        } catch {}
+      } else if (legacyRaw) {
+        try {
+          const single = migrate(JSON.parse(legacyRaw));
+          if (single) guestList = [single];
         } catch {}
       }
 
       set({
-        projects: [guestProject],
-        project: guestProject,
+        projects: guestList,
+        project: guestList[0] || null,
         loadingProjects: false,
         isGuest: true
       });
     } catch {
-      const fallback = makeDefaultProject('My Portfolio Showcase', 'Portfolio', 1600, 1000);
       set({
-        projects: [fallback],
-        project: fallback,
+        projects: [],
+        project: null,
         loadingProjects: false,
         isGuest: true
       });
@@ -455,30 +470,59 @@ export const useStudio = create<StudioState>((set, get) => ({
     const token = localStorage.getItem('token');
     if (!token) return null;
     const cur = get().project;
-    const guestRaw = localStorage.getItem('mockforge_guest_project');
-    const projectToSync = cur || (guestRaw ? migrate(JSON.parse(guestRaw)) : null);
-    if (!projectToSync) return null;
+    const guestProjectsRaw = localStorage.getItem('mockforge_guest_projects');
+    const legacyRaw = localStorage.getItem('mockforge_guest_project');
+    
+    let listToSync: Project[] = [];
+    if (guestProjectsRaw) {
+      try {
+        const parsed = JSON.parse(guestProjectsRaw);
+        if (Array.isArray(parsed)) listToSync = parsed.map(p => migrate(p));
+      } catch {}
+    } else if (legacyRaw) {
+      try {
+        const single = migrate(JSON.parse(legacyRaw));
+        if (single) listToSync = [single];
+      } catch {}
+    }
+    if (cur && !listToSync.some(p => p.id === cur.id)) {
+      listToSync.push(cur);
+    }
+    if (listToSync.length === 0) return null;
 
     try {
-      let thumbnail = projectToSync.thumbnail;
-      if (!thumbnail) {
-        try { thumbnail = await makeThumbnail(projectToSync, 400); } catch {}
+      let savedProject: Project | null = null;
+      for (const p of listToSync) {
+        let thumbnail = p.thumbnail;
+        if (!thumbnail) {
+          try { thumbnail = await makeThumbnail(p, 400); } catch {}
+        }
+        const { _id, ...cleanProject } = ({ ...p, thumbnail }) as any;
+        const response = await projectsAPI.create(cleanProject);
+        if (response.success) {
+          const saved = migrate(response.project);
+          if (cur && cur.id === p.id) {
+            savedProject = saved;
+          } else if (!savedProject) {
+            savedProject = saved;
+          }
+        }
       }
-      const { _id, ...cleanProject } = ({ ...projectToSync, thumbnail }) as any;
-      const response = await projectsAPI.create(cleanProject);
-      if (response.success) {
-        const saved = migrate(response.project);
-        localStorage.removeItem('mockforge_guest_project');
-        set(s => ({
-          project: saved,
-          projects: [saved, ...s.projects.filter(p => p.id !== projectToSync.id && p.id !== saved.id)],
-          isGuest: false,
-          dirty: false,
-          savedAt: Date.now()
-        }));
-        get().toast('Design saved to your account!', 'ok');
-        return saved;
-      }
+      localStorage.removeItem('mockforge_guest_projects');
+      localStorage.removeItem('mockforge_guest_project');
+      
+      const allRes = await projectsAPI.getAll();
+      const allProjects = allRes.success ? allRes.projects.map((p: any) => migrate(p)) : [];
+      
+      set({
+        project: savedProject || (allProjects[0] ?? null),
+        projects: allProjects,
+        isGuest: false,
+        dirty: false,
+        savedAt: Date.now()
+      });
+      get().toast('Designs saved to your account!', 'ok');
+      return savedProject;
     } catch (err) {
       console.error('Failed to sync guest project to account:', err);
     }
@@ -506,11 +550,13 @@ export const useStudio = create<StudioState>((set, get) => ({
     
     const token = localStorage.getItem('token');
     if (!token) {
+      const next = [p, ...get().projects.filter(x => x.id !== p.id)];
       try {
+        localStorage.setItem('mockforge_guest_projects', JSON.stringify(next));
         localStorage.setItem('mockforge_guest_project', JSON.stringify(p));
       } catch {}
-      set(s => ({ 
-        projects: [p, ...s.projects], 
+      set({ 
+        projects: next, 
         project: p, 
         view: 'editor', 
         selection: { kind: 'device', id: p.devices[0]?.id }, 
@@ -520,7 +566,7 @@ export const useStudio = create<StudioState>((set, get) => ({
         savedAt: null, 
         zoom: 0.5,
         isGuest: true
-      }));
+      });
       get().toast('Project created');
       return;
     }
@@ -549,6 +595,27 @@ export const useStudio = create<StudioState>((set, get) => ({
   },
 
   openProject: async (id) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      const project = get().projects.find(p => p.id === id);
+      if (project) {
+        set({ 
+          project, 
+          view: 'editor', 
+          selection: { kind: 'device', id: project.devices[0]?.id }, 
+          past: [], 
+          future: [], 
+          dirty: false, 
+          savedAt: project.updatedAt, 
+          zoom: 0.5,
+          isGuest: true
+        });
+      } else {
+        get().toast('Project not found', 'err');
+      }
+      return;
+    }
+
     try {
       const response = await projectsAPI.getOne(id);
       if (response.success) {
@@ -561,7 +628,8 @@ export const useStudio = create<StudioState>((set, get) => ({
           future: [], 
           dirty: false, 
           savedAt: project.updatedAt, 
-          zoom: 0.5 
+          zoom: 0.5,
+          isGuest: false
         });
       }
     } catch (error) {
@@ -572,9 +640,31 @@ export const useStudio = create<StudioState>((set, get) => ({
   closeEditor: () => { get().save(true); get().goto('dashboard'); },
 
   deleteProject: async (id) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      const next = get().projects.filter(p => p.id !== id);
+      set(s => ({
+        projects: next,
+        project: s.project?.id === id ? null : s.project
+      }));
+      try {
+        localStorage.setItem('mockforge_guest_projects', JSON.stringify(next));
+        if (next.length > 0) {
+          localStorage.setItem('mockforge_guest_project', JSON.stringify(next[0]));
+        } else {
+          localStorage.removeItem('mockforge_guest_project');
+        }
+      } catch {}
+      get().toast('Project deleted', 'info');
+      return;
+    }
+
     try {
       await projectsAPI.delete(id);
-      set(s => ({ projects: s.projects.filter(p => p.id !== id) }));
+      set(s => ({
+        projects: s.projects.filter(p => p.id !== id),
+        project: s.project?.id === id ? null : s.project
+      }));
       get().toast('Project deleted', 'info');
     } catch (error) {
       get().toast('Failed to delete project', 'err');
@@ -582,6 +672,27 @@ export const useStudio = create<StudioState>((set, get) => ({
   },
 
   duplicateProject: async (id) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      const target = get().projects.find(p => p.id === id);
+      if (target) {
+        const copy = migrate({
+          ...JSON.parse(JSON.stringify(target)),
+          id: uid(),
+          name: `${target.name} (Copy)`,
+          updatedAt: Date.now(),
+          createdAt: Date.now()
+        });
+        const next = [copy, ...get().projects];
+        set({ projects: next });
+        try {
+          localStorage.setItem('mockforge_guest_projects', JSON.stringify(next));
+        } catch {}
+        get().toast('Project duplicated');
+      }
+      return;
+    }
+
     try {
       const response = await projectsAPI.duplicate(id);
       if (response.success) {
@@ -595,6 +706,19 @@ export const useStudio = create<StudioState>((set, get) => ({
   },
 
   importProject: async (p) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      const newProject = migrate(p);
+      const next = [newProject, ...get().projects.filter(x => x.id !== newProject.id)];
+      set({ projects: next, isGuest: true });
+      try {
+        localStorage.setItem('mockforge_guest_projects', JSON.stringify(next));
+        localStorage.setItem('mockforge_guest_project', JSON.stringify(newProject));
+      } catch {}
+      get().toast('Project imported');
+      return;
+    }
+
     try {
       const response = await projectsAPI.create(migrate(p));
       if (response.success) {
@@ -1160,10 +1284,11 @@ export const useStudio = create<StudioState>((set, get) => ({
     
     if (!token) {
       try {
-        localStorage.setItem('mockforge_guest_project', JSON.stringify(projectWithThumb));
         const next = get().projects.some(x => x.id === project.id)
           ? get().projects.map(x => x.id === project.id ? projectWithThumb : x)
           : [projectWithThumb, ...get().projects];
+        localStorage.setItem('mockforge_guest_projects', JSON.stringify(next));
+        localStorage.setItem('mockforge_guest_project', JSON.stringify(projectWithThumb));
         set(s => ({
           projects: next,
           dirty: false,
