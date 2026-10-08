@@ -7,7 +7,7 @@ export interface ViewportOption {
   id: CaptureViewport;
   label: string;
   sublabel: string;
-  icon: string;
+  iconKind: 'laptop' | 'phone' | 'tablet';
   width: number;
   height: number;
   description: string;
@@ -19,7 +19,7 @@ export const VIEWPORT_OPTIONS: ViewportOption[] = [
     id: 'desktop',
     label: 'Desktop / Laptop',
     sublabel: '1440 × 900 px',
-    icon: '💻',
+    iconKind: 'laptop',
     width: 1440,
     height: 900,
     description: 'Perfect for MacBook, Laptop & Browser Window mockups',
@@ -29,7 +29,7 @@ export const VIEWPORT_OPTIONS: ViewportOption[] = [
     id: 'mobile',
     label: 'Mobile Screen',
     sublabel: '390 × 844 px',
-    icon: '📱',
+    iconKind: 'phone',
     width: 390,
     height: 844,
     description: 'Perfect for iPhone & Android Smartphone mockups',
@@ -39,7 +39,7 @@ export const VIEWPORT_OPTIONS: ViewportOption[] = [
     id: 'tablet',
     label: 'Tablet / iPad',
     sublabel: '820 × 1180 px',
-    icon: '📟',
+    iconKind: 'tablet',
     width: 820,
     height: 1180,
     description: 'Perfect for iPad & Tablet mockups',
@@ -159,26 +159,26 @@ export async function captureWebsiteScreenshots(
 
     onProgress?.(`Rendering ${vpMeta.label} viewport...`, basePercent);
 
-    // Build URL candidates with different high-speed providers
+    // Build URL candidates with true responsive viewports (media-query aware)
     const candidates: string[] = [];
 
     if (vp === 'desktop') {
       candidates.push(
-        `https://api.microlink.io?url=${encodeURIComponent(formattedUrl)}&screenshot=true&meta=false&embed=screenshot.url&viewport.width=1440&viewport.height=900&waitForTimeout=1500`,
+        `https://api.microlink.io?url=${encodeURIComponent(formattedUrl)}&screenshot=true&meta=false&embed=screenshot.url&viewport.width=1440&viewport.height=900`,
         `https://s0.wp.com/mshots/v1/${encodeURIComponent(formattedUrl)}?w=1440&h=900`,
         `https://image.thum.io/get/width/1440/crop/900/${formattedUrl}`
       );
     } else if (vp === 'mobile') {
+      // True mobile responsive viewport with iPhone touch & viewport width to trigger mobile CSS
       candidates.push(
-        `https://api.microlink.io?url=${encodeURIComponent(formattedUrl)}&screenshot=true&meta=false&embed=screenshot.url&viewport.width=390&viewport.height=844&viewport.isMobile=true&viewport.hasTouch=true&viewport.deviceScaleFactor=2&waitForTimeout=1500`,
-        `https://s0.wp.com/mshots/v1/${encodeURIComponent(formattedUrl)}?w=480&h=960`,
-        `https://image.thum.io/get/width/480/crop/960/iphone/${formattedUrl}`
+        `https://api.microlink.io?url=${encodeURIComponent(formattedUrl)}&screenshot=true&meta=false&embed=screenshot.url&viewport.width=390&viewport.height=844&viewport.isMobile=true&viewport.hasTouch=true&viewport.deviceScaleFactor=2`,
+        `https://api.microlink.io?url=${encodeURIComponent(formattedUrl)}&screenshot=true&meta=false&embed=screenshot.url&viewport.width=375&viewport.height=812&viewport.isMobile=true`
       );
     } else if (vp === 'tablet') {
+      // True tablet responsive viewport with iPad touch & viewport width to trigger tablet CSS
       candidates.push(
-        `https://api.microlink.io?url=${encodeURIComponent(formattedUrl)}&screenshot=true&meta=false&embed=screenshot.url&viewport.width=820&viewport.height=1180&viewport.isMobile=true&viewport.deviceScaleFactor=2&waitForTimeout=1500`,
-        `https://s0.wp.com/mshots/v1/${encodeURIComponent(formattedUrl)}?w=800&h=1100`,
-        `https://image.thum.io/get/width/800/crop/1100/${formattedUrl}`
+        `https://api.microlink.io?url=${encodeURIComponent(formattedUrl)}&screenshot=true&meta=false&embed=screenshot.url&viewport.width=820&viewport.height=1180&viewport.isMobile=true&viewport.hasTouch=true&viewport.deviceScaleFactor=2`,
+        `https://api.microlink.io?url=${encodeURIComponent(formattedUrl)}&screenshot=true&meta=false&embed=screenshot.url&viewport.width=768&viewport.height=1024&viewport.isMobile=true`
       );
     }
 

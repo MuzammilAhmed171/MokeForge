@@ -4,7 +4,6 @@ import type { DeviceKind, Project } from '../types';
 import { applyLayoutPositions, CANVAS_PRESETS, DEVICE_META, DECO_PRESETS, makeDefaultProject, PROJECT_TYPES } from '../templates';
 import { COMPOSITIONS } from '../engine';
 import { makeThumbnail } from '../renderer';
-import { loadDemoAssets } from '../sampleScreens';
 import { DeviceFrame } from './DeviceFrame';
 import { IcArrowR, IcCopy, IcFolder, IcPlus, IcSpin, IcStar, IcTrash, IcWand, LogoMark, IcLogout, IcSettings } from '../icons';
 import { useAuth } from '../auth/AuthContext';
@@ -31,7 +30,6 @@ export function Dashboard() {
   const toast = useStudio(s => s.toast);
   const { user, logout } = useAuth();
   const [modal, setModal] = useState(false);
-  const [demoLoading, setDemoLoading] = useState(false);
 
   const stats = useMemo(() => ({
     projects: projects.length,
@@ -39,34 +37,6 @@ export function Dashboard() {
     screens: projects.reduce((n, p) => n + p.assets.length, 0),
     devices: projects.reduce((n, p) => n + p.devices.length, 0),
   }), [projects, totalExports]);
-
-  const loadDemo = async () => {
-    setDemoLoading(true);
-    try {
-      const assets = await loadDemoAssets();
-      let p = makeDefaultProject('Aurora Analytics', 'Dashboard', 1600, 1000);
-      p = { ...p, assets };
-      p = applyLayoutPositions(p, 'responsive');
-      p = {
-        ...p,
-        devices: p.devices.map((d, i) => ({ ...d, assetId: assets[i === 2 ? 1 : 0]?.id ?? null })),
-        text: { ...p.text, enabled: true, title: 'Aurora Analytics', subtitle: 'MERN stack analytics platform', showBadges: true, badges: ['React', 'Node.js', 'MongoDB', 'Tailwind'] },
-        decoration: { ...p.decoration, set: 'orbs', seed: 42 },
-        accents: { a1: '#ff6b3d', a2: '#45d6c8' },
-      };
-      try { p.thumbnail = await makeThumbnail(p); } catch { }
-      await importProject(p);
-      const created = useStudio.getState().projects[0];
-      if (created) {
-        await openProject(created.id);
-        toast('Demo project ready — press "Surprise me" for variations');
-      }
-    } catch (e) {
-      console.error(e);
-      toast('Could not build the demo project', 'err');
-    }
-    setDemoLoading(false);
-  };
 
   return (
     <div className="h-full overflow-y-auto">
@@ -106,12 +76,8 @@ export function Dashboard() {
               <span style={{ color: 'var(--color-acc)' }}>Portfolio pieces</span> out.
             </h1>
             <div className="flex gap-2.5 pb-2">
-              <button className="btn !py-2.5 !px-5" onClick={() => void loadDemo()} disabled={demoLoading}>
-                {demoLoading ? <IcSpin size={15} /> : <IcArrowR size={15} />}
-                {demoLoading ? 'Building demo…' : 'Open demo project'}
-              </button>
               <button className="btn btn-acc !py-2.5 !px-5" onClick={() => setModal(true)}>
-                <IcPlus size={15} /> Start fresh
+                <IcPlus size={15} /> New project
               </button>
             </div>
           </div>
@@ -165,7 +131,7 @@ export function Dashboard() {
               <div className="mx-auto w-fit mb-4 text-dim"><IcFolder size={34} /></div>
               <p className="text-[14px] text-mut max-w-[420px] mx-auto leading-relaxed">
                 Everything you make lives in your browser — private and offline-ready.
-                Start from a template below, or load the demo to see the full workflow.
+                Create a new project above to get started.
               </p>
             </div>
           ) : (

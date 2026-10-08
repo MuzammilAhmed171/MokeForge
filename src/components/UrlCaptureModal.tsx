@@ -9,7 +9,7 @@ import {
 } from '../services/websiteCapture';
 import type { Asset } from '../types';
 import {
-  IcClose, IcSpark, IcSpin, IcCheck, IcLaptop, IcPhone, IcTablet, IcArrowR
+  IcClose, IcSpark, IcSpin, IcCheck, IcLaptop, IcPhone, IcTablet, IcArrowR, IcAlert, IcGlobe
 } from '../icons';
 
 interface UrlCaptureModalProps {
@@ -122,7 +122,7 @@ export function UrlCaptureModal({ open, onClose }: UrlCaptureModalProps) {
         }, true);
       }
 
-      toast(`🎉 Captured ${assets.length} website screens from ${extractDomain(formatted)}!`, 'ok');
+      toast(`Captured ${assets.length} website screens from ${extractDomain(formatted)}`, 'ok');
     } catch (err: any) {
       setIsLoading(false);
       setErrorMsg(err.message || 'Failed to capture screenshots. Please check the URL.');
@@ -131,6 +131,12 @@ export function UrlCaptureModal({ open, onClose }: UrlCaptureModalProps) {
 
   const handleFinish = () => {
     onClose();
+  };
+
+  const renderViewportIcon = (iconKind: 'laptop' | 'phone' | 'tablet') => {
+    if (iconKind === 'laptop') return <IcLaptop size={18} />;
+    if (iconKind === 'phone') return <IcPhone size={18} />;
+    return <IcTablet size={18} />;
   };
 
   return (
@@ -147,7 +153,7 @@ export function UrlCaptureModal({ open, onClose }: UrlCaptureModalProps) {
         <div className="px-6 pt-5 pb-4 border-b border-line2 flex items-center justify-between sticky top-0 bg-panel/95 backdrop-blur-md z-10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-acc to-acc2 flex items-center justify-center text-white shadow-[0_0_20px_rgba(255,107,61,0.35)]">
-              <IcSpark size={20} />
+              <IcGlobe size={20} />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -252,8 +258,14 @@ export function UrlCaptureModal({ open, onClose }: UrlCaptureModalProps) {
                         : 'border-line bg-panel2 opacity-60 hover:opacity-100 hover:border-line2'
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-lg">{vp.icon}</span>
+                    <div className="flex items-center justify-between mb-2.5">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                        isSelected 
+                          ? 'bg-acc/15 text-acc border border-acc/30 shadow-[0_0_12px_rgba(255,107,61,0.2)]' 
+                          : 'bg-panel3 text-mut border border-line'
+                      }`}>
+                        {renderViewportIcon(vp.iconKind)}
+                      </div>
                       <div
                         className={`w-4 h-4 rounded-md flex items-center justify-center border transition-all ${
                           isSelected ? 'bg-acc border-acc text-white' : 'border-line bg-panel'
@@ -294,7 +306,7 @@ export function UrlCaptureModal({ open, onClose }: UrlCaptureModalProps) {
           {/* Error Message */}
           {errorMsg && (
             <div className="p-3 rounded-xl border border-danger/40 bg-danger/10 text-danger text-xs flex items-center gap-2 anim-shake">
-              <span>⚠️</span>
+              <IcAlert size={14} />
               <span className="flex-1">{errorMsg}</span>
             </div>
           )}
@@ -326,7 +338,7 @@ export function UrlCaptureModal({ open, onClose }: UrlCaptureModalProps) {
             <div className="space-y-2.5 pt-2 border-t border-line2 anim-fade-up">
               <div className="flex items-center justify-between">
                 <div className="text-[12px] font-bold text-fg flex items-center gap-1.5">
-                  <span className="text-acc2">✓</span>
+                  <span className="text-acc2"><IcCheck size={14} /></span>
                   <span>Captured {capturedAssets.length} Screenshots</span>
                 </div>
                 <span className="text-[10px] font-mono text-acc2">Ready & added to studio</span>

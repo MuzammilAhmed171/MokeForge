@@ -12,6 +12,7 @@ import { ShortcutsModal } from './ShortcutsModal';
 import { ContextMenu } from './ContextMenu';
 import { CommandPalette } from './CommandPalette';
 import { AuthExportModal } from './AuthExportModal';
+import { DesktopOnlyView } from './DesktopOnlyView';
 import { clamp } from '../templates';
 import {
   IcArrowL, IcDice, IcDownload, IcExport, IcFit, IcRedo, IcSave, IcStar, IcUndo, IcUpload, IcWand, IcZoomIn, IcZoomOut, LogoMark, IcEye, IcLock,
@@ -21,6 +22,14 @@ export function Editor() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [guestAuthModalOpen, setGuestAuthModalOpen] = useState(false);
+  const [isSmallScreen, setIsSmallScreen] = useState(() => typeof window !== 'undefined' && window.innerWidth < 1024);
+
+  useEffect(() => {
+    const handleResize = () => setIsSmallScreen(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const project = useStudio(s => s.project)!;
   const update = useStudio(s => s.update);
   const undo = useStudio(s => s.undo);
@@ -214,6 +223,10 @@ export function Editor() {
       navigate('/');
     }
   };
+
+  if (isSmallScreen) {
+    return <DesktopOnlyView />;
+  }
 
   return (
     <div className="h-full flex flex-col anim-fade-in">
