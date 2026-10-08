@@ -39,6 +39,7 @@ function EditorRoute() {
   const project = useStudio(s => s.project);
   const projects = useStudio(s => s.projects);
   const openProject = useStudio(s => s.openProject);
+  const createProject = useStudio(s => s.createProject);
   
   useEffect(() => {
     boot();
@@ -48,15 +49,12 @@ function EditorRoute() {
   useEffect(() => {
     if (booted && !project && projects.length > 0) {
       openProject(projects[0].id);
+    } else if (booted && !project && projects.length === 0) {
+      createProject('My Portfolio Showcase', 'Portfolio', 1600, 1000);
     }
-  }, [booted, project, projects, openProject]);
+  }, [booted, project, projects, openProject, createProject]);
 
   if (!booted) return null;
-
-  // If no projects exist at all, redirect to dashboard
-  if (projects.length === 0 && !project) {
-    return <Navigate to="/dashboard" replace />;
-  }
   
   return <AppContent />;
 }
@@ -66,8 +64,9 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public Routes */}
+          {/* Public Routes - Anyone can create and edit on canvas */}
           <Route path="/" element={<LandingPage />} />
+          <Route path="/editor" element={<EditorRoute />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -87,11 +86,6 @@ export default function App() {
           <Route path="/profile" element={
             <ProtectedRoute>
               <ProfilePage />
-            </ProtectedRoute>
-          } />
-          <Route path="/editor" element={
-            <ProtectedRoute>
-              <EditorRoute />
             </ProtectedRoute>
           } />
           

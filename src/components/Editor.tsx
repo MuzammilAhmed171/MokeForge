@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext';
 import { useStudio } from '../store';
 import { makeThumbnail } from '../renderer';
 import { LeftPanel } from './LeftPanel';
@@ -9,12 +11,16 @@ import { GeneratePanel } from './GeneratePanel';
 import { ShortcutsModal } from './ShortcutsModal';
 import { ContextMenu } from './ContextMenu';
 import { CommandPalette } from './CommandPalette';
+import { AuthExportModal } from './AuthExportModal';
 import { clamp } from '../templates';
 import {
-  IcArrowL, IcDice, IcDownload, IcExport, IcFit, IcRedo, IcSave, IcStar, IcUndo, IcUpload, IcWand, IcZoomIn, IcZoomOut, LogoMark, IcEye,
+  IcArrowL, IcDice, IcDownload, IcExport, IcFit, IcRedo, IcSave, IcStar, IcUndo, IcUpload, IcWand, IcZoomIn, IcZoomOut, LogoMark, IcEye, IcLock,
 } from '../icons';
 
 export function Editor() {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const [guestAuthModalOpen, setGuestAuthModalOpen] = useState(false);
   const project = useStudio(s => s.project)!;
   const update = useStudio(s => s.update);
   const undo = useStudio(s => s.undo);
@@ -192,10 +198,27 @@ export function Editor() {
 
   useEffect(() => { fitZoom(); }, []);
 
+  useEffect(() => {
+    if (isAuthenticated && sessionStorage.getItem('mockforge_pending_export') === 'true') {
+      sessionStorage.removeItem('mockforge_pending_export');
+      setExportOpen(true);
+    }
+  }, [isAuthenticated, setExportOpen]);
+
+  const handleBack = () => {
+    if (isAuthenticated) {
+      closeEditor();
+      navigate('/dashboard');
+    } else {
+      void saveNow(true);
+      navigate('/');
+    }
+  };
+
   return (
     <div className="h-full flex flex-col anim-fade-in">
       <div className="h-12 shrink-0 flex items-center gap-2 px-3 border-b border-line2 bg-panel relative z-20">
-        <button className="icon-btn" onClick={closeEditor} title="Back to dashboard"><IcArrowL size={16} /></button>
+        <button className="icon-btn" onClick={handleBack} title={isAuthenticated ? "Back to dashboard" : "Back to Home"}><IcArrowL size={16} /></button>
         <LogoMark size={19} />
         <input
           className="bg-transparent outline-none border border-transparent hover:border-line focus:border-acc rounded-md px-2 py-1 transition-colors w-[220px]"
@@ -208,6 +231,17 @@ export function Editor() {
           <span style={{ width: 7, height: 7, borderRadius: 99, background: dirty ? 'var(--color-gold)' : 'var(--color-acc2)', animation: dirty ? 'pulseDot 1.4s infinite' : undefined }} />
           {dirty ? 'unsaved' : 'saved'}
         </span>
+
+        {!isAuthenticated && (
+          <button
+            onClick={() => setGuestAuthModalOpen(true)}
+            className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-acc/10 text-acc border border-acc/25 hover:bg-acc/20 transition-all cursor-pointer"
+            title="Trial Mode: Sign in to sync your designs to your account"
+          >
+            <IcLock size={11} />
+            <span>Trial Mode · Sign In to Sync</span>
+          </button>
+        )}
 
         <div className="flex-1" />
 
@@ -265,7 +299,19 @@ export function Editor() {
         >
           <IcStar size={15} />
         </button>
-        <button className="icon-btn" title="Download .mockup" onClick={exportMockup}><IcDownload size={15} /></button>
+        <button
+          className="icon-btn"
+          title="Download .mockup"
+          onClick={() => {
+            if (!isAuthenticated) {
+              setGuestAuthModalOpen(true);
+            } else {
+              exportMockup();
+            }
+          }}
+        >
+          <IcDownload size={15} />
+        </button>
         <button className="icon-btn" title="Import .mockup" onClick={() => mockupRef.current?.click()}><IcUpload size={15} /></button>
         <input
           ref={mockupRef} type="file" hidden accept=".json,application/json"
@@ -310,6 +356,12 @@ export function Editor() {
       )}
 
       <ExportModal />
+      <AuthExportModal
+        open={guestAuthModalOpen}
+        onClose={() => setGuestAuthModalOpen(false)}
+        onSuccess={() => setExportOpen(true)}
+        pendingAction="download"
+      />
       <GeneratePanel />
       {contextMenu && (
         <ContextMenu

@@ -13,13 +13,23 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
+  const hasGuestProject = !!localStorage.getItem('mockforge_guest_project');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
     
     try {
       await login(email, password);
-      navigate('/dashboard');
+      const pendingRedirect = sessionStorage.getItem('mockforge_pending_redirect');
+      if (pendingRedirect) {
+        sessionStorage.removeItem('mockforge_pending_redirect');
+        navigate(pendingRedirect);
+      } else if (hasGuestProject) {
+        navigate('/editor');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       // Error is handled by auth context
     }
@@ -45,6 +55,12 @@ export function LoginPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="card p-6 space-y-4">
+          {hasGuestProject && (
+            <div className="p-3 rounded-lg border border-acc2/30 bg-acc2/10 text-acc2 text-xs flex items-center gap-2 anim-fade-in">
+              <span>✓ Your active mockup design will be automatically saved to your account upon login.</span>
+            </div>
+          )}
+
           {/* Error Message */}
           {error && (
             <div className="p-3 rounded-lg border border-danger/30 bg-danger/10 text-danger text-sm anim-fade-in">

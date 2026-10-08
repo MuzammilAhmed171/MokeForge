@@ -74,7 +74,16 @@ export function VerifyEmailPage() {
 
     try {
       await verifyEmail(otpString);
-      navigate('/dashboard');
+      const pendingRedirect = sessionStorage.getItem('mockforge_pending_redirect');
+      const hasGuest = localStorage.getItem('mockforge_guest_project');
+      if (pendingRedirect) {
+        sessionStorage.removeItem('mockforge_pending_redirect');
+        navigate(pendingRedirect);
+      } else if (hasGuest) {
+        navigate('/editor');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       // Error is handled by auth context
       // Clear OTP on error

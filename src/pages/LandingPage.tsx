@@ -69,7 +69,7 @@ export function LandingPage() {
             ) : (
               <>
                 <Link to="/login" className="btn btn-ghost">Log In</Link>
-                <Link to="/signup" className="btn btn-acc">Get Started</Link>
+                <Link to="/editor" className="btn btn-acc">Try Studio Free</Link>
               </>
             )}
           </nav>
@@ -98,13 +98,17 @@ export function LandingPage() {
             </p>
 
             <div className="flex items-center justify-center gap-4 anim-fade-up" style={{ animationDelay: '0.3s' }}>
-              <Link to="/signup" className="btn btn-acc !px-8 !py-3 !text-base">
+              <Link to="/editor" className="btn btn-acc !px-8 !py-3 !text-base shadow-lg shadow-acc/25">
                 Start Creating Free
               </Link>
               <Link to="/login" className="btn !px-8 !py-3 !text-base">
                 Log In
               </Link>
             </div>
+            <p className="mt-3.5 text-xs flex items-center justify-center gap-2 anim-fade-up" style={{ color: 'var(--color-dim)', animationDelay: '0.35s' }}>
+              <span className="w-1.5 h-1.5 rounded-full bg-acc2 inline-block"></span>
+              No sign-up or credit card required · Free instant trial on web canvas
+            </p>
           </div>
 
           {/* Preview Section */}
@@ -134,7 +138,7 @@ export function LandingPage() {
                         <span style={{ color: 'var(--color-mut)' }}>High-quality PNG, JPG &amp; WebP exports with transparent backgrounds</span>
                       </li>
                     </ul>
-                    <Link to="/signup" className="btn btn-acc mt-6 inline-flex">
+                    <Link to="/editor" className="btn btn-acc mt-6 inline-flex">
                       Start Creating Now
                     </Link>
                   </div>
@@ -280,8 +284,8 @@ export function LandingPage() {
             <p className="text-lg mb-8" style={{ color: 'var(--color-mut)' }}>
               Join thousands of developers, UI/UX designers, and creators using MOCK FORGE to elevate their project showcases.
             </p>
-            <Link to="/signup" className="btn btn-acc !px-8 !py-3 !text-base">
-              Get Started Free
+            <Link to="/editor" className="btn btn-acc !px-8 !py-3 !text-base">
+              Try Mockup Studio Free
             </Link>
           </div>
         </section>

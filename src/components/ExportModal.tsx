@@ -1,18 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
 import { useStudio } from '../store';
+import { useAuth } from '../auth/AuthContext';
 import { exportBlob, renderProject } from '../renderer';
 import { clamp, EXPORT_PRESETS } from '../templates';
 import { Seg, SliderRow, Toggle } from './ui';
-import { IcCheck, IcClose, IcCopy, IcDownload, IcSpin } from '../icons';
+import { IcCheck, IcClose, IcCopy, IcDownload, IcLock, IcSpin } from '../icons';
+import { AuthExportModal } from './AuthExportModal';
 
 type Format = 'png' | 'jpeg' | 'webp';
 
 export function ExportModal() {
+  const { isAuthenticated } = useAuth();
   const project = useStudio(s => s.project)!;
   const open = useStudio(s => s.exportOpen);
   const setOpen = useStudio(s => s.setExportOpen);
   const trackExport = useStudio(s => s.trackExport);
   const toast = useStudio(s => s.toast);
+
+  const [authGateOpen, setAuthGateOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'download' | 'copy'>('download');
 
   const [format, setFormat] = useState<Format>('png');
   const [quality, setQuality] = useState(0.92);
@@ -153,18 +159,55 @@ export function ExportModal() {
               </div>
             </div>
 
+            {!isAuthenticated && (
+              <div className="py-2 px-3 rounded-lg bg-acc/10 border border-acc/25 flex items-center gap-2 text-[11px] text-acc font-medium anim-fade-in">
+                <IcLock size={13} className="shrink-0" />
+                <span>Free Trial Mode · Sign in to download</span>
+              </div>
+            )}
+
             <div className="flex gap-2 pt-1">
-              <button className="btn btn-acc flex-1 justify-center !py-2.5" disabled={busy} onClick={() => void doExport(false)}>
-                {busy ? <IcSpin size={15} /> : <IcDownload size={15} />}
-                {busy ? 'Rendering…' : 'Download'}
+              <button
+                className="btn btn-acc flex-1 justify-center !py-2.5"
+                disabled={busy}
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    setPendingAction('download');
+                    setAuthGateOpen(true);
+                  } else {
+                    void doExport(false);
+                  }
+                }}
+              >
+                {busy ? <IcSpin size={15} /> : isAuthenticated ? <IcDownload size={15} /> : <IcLock size={15} />}
+                {busy ? 'Rendering…' : isAuthenticated ? 'Download' : 'Sign in & Download'}
               </button>
-              <button className="btn" disabled={busy || format === 'webp'} onClick={() => void doExport(true)} title="Copy PNG/JPG to clipboard">
+              <button
+                className="btn"
+                disabled={busy || format === 'webp'}
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    setPendingAction('copy');
+                    setAuthGateOpen(true);
+                  } else {
+                    void doExport(true);
+                  }
+                }}
+                title={isAuthenticated ? 'Copy PNG/JPG to clipboard' : 'Sign in to copy to clipboard'}
+              >
                 {copied ? <IcCheck size={15} /> : <IcCopy size={15} />}
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      <AuthExportModal
+        open={authGateOpen}
+        onClose={() => setAuthGateOpen(false)}
+        onSuccess={() => void doExport(pendingAction === 'copy')}
+        pendingAction={pendingAction}
+      />
     </div>
   );
 }

@@ -68,6 +68,12 @@ export function SignupPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="card p-6 space-y-4">
+          {!!localStorage.getItem('mockforge_guest_project') && (
+            <div className="p-3 rounded-lg border border-acc2/30 bg-acc2/10 text-acc2 text-xs flex items-center gap-2 anim-fade-in">
+              <span>✓ Your active mockup design will be automatically saved to your account upon signing up.</span>
+            </div>
+          )}
+
           {/* Error Message */}
           {error && (
             <div className="p-3 rounded-lg border border-danger/30 bg-danger/10 text-danger text-sm anim-fade-in">

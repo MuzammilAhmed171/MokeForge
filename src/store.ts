@@ -28,6 +28,8 @@ interface StudioState {
   toasts: Toast[];
   totalExports: number;
   loadingProjects: boolean;
+  isGuest: boolean;
+  syncGuestProjectToAccount: () => Promise<Project | null>;
 
   /* new: generation */
   mood: Mood;
@@ -219,6 +221,7 @@ export const useStudio = create<StudioState>((set, get) => ({
   toasts: [],
   totalExports: 0,
   loadingProjects: false,
+  isGuest: !localStorage.getItem('token'),
 
   mood: 'auto',
   locks: { devices: false, background: false, decoration: false, text: false, logo: false },
@@ -371,16 +374,115 @@ export const useStudio = create<StudioState>((set, get) => ({
 
   loadProjects: async () => {
     set({ loadingProjects: true });
-    try {
-      const response = await projectsAPI.getAll();
-      if (response.success) {
-        const projects = response.projects.map((p: any) => migrate(p));
-        set({ projects, loadingProjects: false });
+    const token = localStorage.getItem('token');
+
+    // If authenticated:
+    if (token) {
+      // 1. Check if there was an unsynced guest project created before logging in / signing up
+      const guestRaw = localStorage.getItem('mockforge_guest_project');
+      if (guestRaw) {
+        try {
+          const guestProject = migrate(JSON.parse(guestRaw));
+          const { _id, ...cleanProject } = guestProject as any;
+          const syncRes = await projectsAPI.create(cleanProject);
+          if (syncRes.success) {
+            localStorage.removeItem('mockforge_guest_project');
+            const savedProject = migrate(syncRes.project);
+            get().toast('Your guest design was saved to your account!', 'ok');
+            set(s => ({
+              project: savedProject,
+              projects: [savedProject, ...s.projects.filter(p => p.id !== savedProject.id)],
+              isGuest: false
+            }));
+          }
+        } catch (syncErr) {
+          console.warn('Could not auto-sync guest project:', syncErr);
+        }
       }
-    } catch (error) {
-      console.error('Failed to load projects:', error);
-      set({ loadingProjects: false });
+
+      // 2. Load all projects for authenticated user
+      try {
+        const response = await projectsAPI.getAll();
+        if (response.success) {
+          const projects = response.projects.map((p: any) => migrate(p));
+          set(s => ({
+            projects: s.project ? [s.project, ...projects.filter((p: any) => p.id !== s.project?.id)] : projects,
+            loadingProjects: false,
+            isGuest: false
+          }));
+          if (!get().project && projects.length > 0) {
+            set({ project: projects[0] });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load projects:', error);
+        set({ loadingProjects: false, isGuest: false });
+      }
+      return;
     }
+
+    // Guest Mode (unauthenticated):
+    try {
+      const guestRaw = localStorage.getItem('mockforge_guest_project');
+      let guestProject: Project;
+      if (guestRaw) {
+        guestProject = migrate(JSON.parse(guestRaw));
+      } else {
+        guestProject = makeDefaultProject('My Portfolio Showcase', 'Portfolio', 1600, 1000);
+        try {
+          localStorage.setItem('mockforge_guest_project', JSON.stringify(guestProject));
+        } catch {}
+      }
+
+      set({
+        projects: [guestProject],
+        project: guestProject,
+        loadingProjects: false,
+        isGuest: true
+      });
+    } catch {
+      const fallback = makeDefaultProject('My Portfolio Showcase', 'Portfolio', 1600, 1000);
+      set({
+        projects: [fallback],
+        project: fallback,
+        loadingProjects: false,
+        isGuest: true
+      });
+    }
+  },
+
+  syncGuestProjectToAccount: async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+    const cur = get().project;
+    const guestRaw = localStorage.getItem('mockforge_guest_project');
+    const projectToSync = cur || (guestRaw ? migrate(JSON.parse(guestRaw)) : null);
+    if (!projectToSync) return null;
+
+    try {
+      let thumbnail = projectToSync.thumbnail;
+      if (!thumbnail) {
+        try { thumbnail = await makeThumbnail(projectToSync, 400); } catch {}
+      }
+      const { _id, ...cleanProject } = ({ ...projectToSync, thumbnail }) as any;
+      const response = await projectsAPI.create(cleanProject);
+      if (response.success) {
+        const saved = migrate(response.project);
+        localStorage.removeItem('mockforge_guest_project');
+        set(s => ({
+          project: saved,
+          projects: [saved, ...s.projects.filter(p => p.id !== projectToSync.id && p.id !== saved.id)],
+          isGuest: false,
+          dirty: false,
+          savedAt: Date.now()
+        }));
+        get().toast('Design saved to your account!', 'ok');
+        return saved;
+      }
+    } catch (err) {
+      console.error('Failed to sync guest project to account:', err);
+    }
+    return null;
   },
 
   goto: (v) => {
@@ -402,6 +504,27 @@ export const useStudio = create<StudioState>((set, get) => ({
       p.devices = [makeDevice(quickKind, w, h, null, 0)];
     }
     
+    const token = localStorage.getItem('token');
+    if (!token) {
+      try {
+        localStorage.setItem('mockforge_guest_project', JSON.stringify(p));
+      } catch {}
+      set(s => ({ 
+        projects: [p, ...s.projects], 
+        project: p, 
+        view: 'editor', 
+        selection: { kind: 'device', id: p.devices[0]?.id }, 
+        past: [], 
+        future: [], 
+        dirty: false, 
+        savedAt: null, 
+        zoom: 0.5,
+        isGuest: true
+      }));
+      get().toast('Project created');
+      return;
+    }
+
     try {
       const response = await projectsAPI.create(p);
       if (response.success) {
@@ -415,7 +538,8 @@ export const useStudio = create<StudioState>((set, get) => ({
           future: [], 
           dirty: false, 
           savedAt: null, 
-          zoom: 0.5 
+          zoom: 0.5,
+          isGuest: false
         }));
         get().toast('Project created');
       }
@@ -1032,6 +1156,28 @@ export const useStudio = create<StudioState>((set, get) => ({
     }
     
     const projectWithThumb = { ...project, thumbnail };
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      try {
+        localStorage.setItem('mockforge_guest_project', JSON.stringify(projectWithThumb));
+        const next = get().projects.some(x => x.id === project.id)
+          ? get().projects.map(x => x.id === project.id ? projectWithThumb : x)
+          : [projectWithThumb, ...get().projects];
+        set(s => ({
+          projects: next,
+          dirty: false,
+          savedAt: Date.now(),
+          saving: false,
+          project: s.project ? { ...s.project, thumbnail } : null
+        }));
+        if (!silent) get().toast('Project saved locally');
+      } catch (err) {
+        set({ saving: false });
+        if (!silent) get().toast('Could not save to browser storage', 'err');
+      }
+      return;
+    }
     
     try {
       const response = await projectsAPI.update(project.id, projectWithThumb);
