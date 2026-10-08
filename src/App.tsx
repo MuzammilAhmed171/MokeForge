@@ -12,7 +12,8 @@ import { ProfilePage } from './pages/ProfilePage';
 import { useStudio } from './store';
 import { Dashboard } from './components/Dashboard';
 import { Editor } from './components/Editor';
-import { useEffect } from 'react';
+import { DesktopOnlyView } from './components/DesktopOnlyView';
+import { useEffect, useState } from 'react';
 
 function AppContent() {
   const booted = useStudio(s => s.booted);
@@ -40,6 +41,13 @@ function EditorRoute() {
   const projects = useStudio(s => s.projects);
   const openProject = useStudio(s => s.openProject);
   const createProject = useStudio(s => s.createProject);
+  const [isSmallScreen, setIsSmallScreen] = useState(() => typeof window !== 'undefined' && window.innerWidth < 1024);
+
+  useEffect(() => {
+    const handleResize = () => setIsSmallScreen(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   useEffect(() => {
     boot();
@@ -47,14 +55,18 @@ function EditorRoute() {
 
   // Only open first project once on mount if no project is currently open in editor
   useEffect(() => {
-    if (booted && !project) {
+    if (booted && !project && !isSmallScreen) {
       if (projects.length > 0) {
         openProject(projects[0].id);
       } else {
         createProject('Untitled Project', 'Website', 1600, 1000);
       }
     }
-  }, [booted, project, projects, openProject, createProject]);
+  }, [booted, project, projects, openProject, createProject, isSmallScreen]);
+
+  if (isSmallScreen) {
+    return <DesktopOnlyView />;
+  }
 
   if (!booted) return null;
   

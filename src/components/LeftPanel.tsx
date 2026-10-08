@@ -5,7 +5,6 @@ import { DECO_PRESETS, DEVICE_META, uid } from '../templates';
 import { COMPOSITIONS } from '../engine';
 import { bgThumb } from '../backgrounds';
 import type { BgStyle, BgType, DecoDepth, DeviceKind } from '../types';
-import { loadDemoAssets } from '../sampleScreens';
 import { Section } from './ui';
 import {
   IcBrowser, IcDevice, IcImage, IcLaptop, IcMonitor, IcPhone, IcPlus, IcRefresh, IcSpark,
@@ -159,7 +158,6 @@ function ScreensTab() {
   const toast = useStudio(s => s.toast);
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
-  const [loadingDemo, setLoadingDemo] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [urlModalOpen, setUrlModalOpen] = useState(false);
 
@@ -223,26 +221,10 @@ function ScreensTab() {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-1.5 mt-2">
-          <button
-            className="btn btn-ghost justify-center !text-[11px] !py-1.5"
-            disabled={loadingDemo}
-            onClick={async () => {
-              setLoadingDemo(true);
-              try {
-                const assets = await loadDemoAssets();
-                for (const a of assets) addAsset(a);
-                toast('Sample screens inserted');
-              } catch { toast('Could not load samples', 'err'); }
-              setLoadingDemo(false);
-            }}
-          >
-            {loadingDemo ? <IcSpin size={12} /> : <IcPlus size={12} />}
-            Samples
-          </button>
-          <button className="btn btn-ghost justify-center !text-[11px] !py-1.5" onClick={responsive}>
+        <div className="mt-2">
+          <button className="w-full btn btn-ghost justify-center !text-[11px] !py-1.5" onClick={responsive}>
             <IcRefresh size={12} />
-            Responsive
+            Auto-arrange Responsive
           </button>
         </div>
       </div>

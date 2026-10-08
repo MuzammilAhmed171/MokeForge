@@ -123,4 +123,13 @@ export const projectsAPI = {
     }),
 };
 
-export default { authAPI, projectsAPI };
+// Screenshot Capture API
+export const captureAPI = {
+  captureUrl: (url: string, viewports: string[] = ['desktop', 'mobile', 'tablet']) =>
+    apiCall('/capture', {
+      method: 'POST',
+      body: JSON.stringify({ url, viewports }),
+    }),
+};
+
+export default { authAPI, projectsAPI, captureAPI };

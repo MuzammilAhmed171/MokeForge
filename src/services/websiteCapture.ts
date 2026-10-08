@@ -1,5 +1,6 @@
 import type { Asset } from '../types';
 import { uid } from '../templates';
+import { captureAPI } from './api';
 
 export type CaptureViewport = 'desktop' | 'mobile' | 'tablet';
 
@@ -150,7 +151,23 @@ export async function captureWebsiteScreenshots(
   const assets: Asset[] = [];
   const total = viewports.length;
 
-  onProgress?.(`Connecting to ${domain}...`, 10);
+  onProgress?.(`Connecting to backend service & ${domain}...`, 10);
+
+  // Request screenshots and viewport configuration from backend API
+  let backendScreenshots: Record<string, { url: string; fallbackUrls: string[] }> = {};
+  try {
+    const res = await captureAPI.captureUrl(formattedUrl, viewports);
+    if (res?.success && Array.isArray(res.screenshots)) {
+      for (const item of res.screenshots) {
+        backendScreenshots[item.kind] = {
+          url: item.url,
+          fallbackUrls: item.fallbackUrls || []
+        };
+      }
+    }
+  } catch (err) {
+    console.info('Backend capture route skipped, using direct fallback:', err);
+  }
 
   for (let i = 0; i < viewports.length; i++) {
     const vp = viewports[i];
@@ -159,27 +176,30 @@ export async function captureWebsiteScreenshots(
 
     onProgress?.(`Rendering ${vpMeta.label} viewport...`, basePercent);
 
-    // Build URL candidates with true responsive viewports (media-query aware)
+    // Candidates orchestrated by backend or fallbacks
     const candidates: string[] = [];
+    const fromBackend = backendScreenshots[vp];
 
-    if (vp === 'desktop') {
-      candidates.push(
-        `https://api.microlink.io?url=${encodeURIComponent(formattedUrl)}&screenshot=true&meta=false&embed=screenshot.url&viewport.width=1440&viewport.height=900`,
-        `https://s0.wp.com/mshots/v1/${encodeURIComponent(formattedUrl)}?w=1440&h=900`,
-        `https://image.thum.io/get/width/1440/crop/900/${formattedUrl}`
-      );
-    } else if (vp === 'mobile') {
-      // True mobile responsive viewport with iPhone touch & viewport width to trigger mobile CSS
-      candidates.push(
-        `https://api.microlink.io?url=${encodeURIComponent(formattedUrl)}&screenshot=true&meta=false&embed=screenshot.url&viewport.width=390&viewport.height=844&viewport.isMobile=true&viewport.hasTouch=true&viewport.deviceScaleFactor=2`,
-        `https://api.microlink.io?url=${encodeURIComponent(formattedUrl)}&screenshot=true&meta=false&embed=screenshot.url&viewport.width=375&viewport.height=812&viewport.isMobile=true`
-      );
-    } else if (vp === 'tablet') {
-      // True tablet responsive viewport with iPad touch & viewport width to trigger tablet CSS
-      candidates.push(
-        `https://api.microlink.io?url=${encodeURIComponent(formattedUrl)}&screenshot=true&meta=false&embed=screenshot.url&viewport.width=820&viewport.height=1180&viewport.isMobile=true&viewport.hasTouch=true&viewport.deviceScaleFactor=2`,
-        `https://api.microlink.io?url=${encodeURIComponent(formattedUrl)}&screenshot=true&meta=false&embed=screenshot.url&viewport.width=768&viewport.height=1024&viewport.isMobile=true`
-      );
+    if (fromBackend) {
+      candidates.push(fromBackend.url, ...fromBackend.fallbackUrls);
+    } else {
+      if (vp === 'desktop') {
+        candidates.push(
+          `https://api.microlink.io?url=${encodeURIComponent(formattedUrl)}&screenshot=true&meta=false&embed=screenshot.url&viewport.width=1440&viewport.height=900`,
+          `https://s0.wp.com/mshots/v1/${encodeURIComponent(formattedUrl)}?w=1440&h=900`,
+          `https://image.thum.io/get/width/1440/crop/900/${formattedUrl}`
+        );
+      } else if (vp === 'mobile') {
+        candidates.push(
+          `https://api.microlink.io?url=${encodeURIComponent(formattedUrl)}&screenshot=true&meta=false&embed=screenshot.url&viewport.width=390&viewport.height=844&viewport.isMobile=true&viewport.hasTouch=true&viewport.deviceScaleFactor=2`,
+          `https://api.microlink.io?url=${encodeURIComponent(formattedUrl)}&screenshot=true&meta=false&embed=screenshot.url&viewport.width=375&viewport.height=812&viewport.isMobile=true`
+        );
+      } else if (vp === 'tablet') {
+        candidates.push(
+          `https://api.microlink.io?url=${encodeURIComponent(formattedUrl)}&screenshot=true&meta=false&embed=screenshot.url&viewport.width=820&viewport.height=1180&viewport.isMobile=true&viewport.hasTouch=true&viewport.deviceScaleFactor=2`,
+          `https://api.microlink.io?url=${encodeURIComponent(formattedUrl)}&screenshot=true&meta=false&embed=screenshot.url&viewport.width=768&viewport.height=1024&viewport.isMobile=true`
+        );
+      }
     }
 
     try {
