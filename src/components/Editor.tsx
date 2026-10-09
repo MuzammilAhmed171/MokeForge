@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useStudio } from '../store';
-import { makeThumbnail } from '../renderer';
+import { makeThumbnail, renderProject } from '../renderer';
 import { LeftPanel } from './LeftPanel';
 import { RightPanel } from './RightPanel';
 import { StagePreview } from './StagePreview';
@@ -334,17 +334,12 @@ export function Editor() {
       </div>
 
       {previewMode ? (
-        <div className="fixed inset-0 z-50 bg-ink flex items-center justify-center overflow-hidden">
-          <div className="w-full h-full flex items-center justify-center">
-            <StagePreview onContextMenu={(e: React.MouseEvent) => setContextMenu({ x: e.clientX, y: e.clientY })} />
-          </div>
-          <button 
-            className="absolute top-6 right-6 btn btn-acc"
-            onClick={() => setPreviewMode(false)}
-          >
-            Exit Preview (ESC)
-          </button>
-        </div>
+        <PreviewOverlay 
+          zoom={zoom} 
+          setZoom={setZoom} 
+          onExit={() => setPreviewMode(false)} 
+          project={project}
+        />
       ) : (
         <div className="flex-1 flex min-h-0 overflow-hidden">
           <LeftPanel />
@@ -389,6 +384,234 @@ export function Editor() {
       {project.devices.length === 0 && project.assets.length === 0 && (
         <FirstRunHint onPick={() => toast('Add a device or drop a screenshot to begin', 'info')} />
       )}
+    </div>
+  );
+}
+
+/* ---------- Fullscreen Preview Overlay ---------- */
+function PreviewOverlay({ zoom, setZoom, onExit, project }: { zoom: number; setZoom: (z: number) => void; onExit: () => void; project: any }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const [panX, setPanX] = useState(0);
+  const [panY, setPanY] = useState(0);
+  const [previewZoom, setPreviewZoom] = useState(1);
+  const [canvasUrl, setCanvasUrl] = useState<string | null>(null);
+  const dragRef = useRef<{ sx: number; sy: number; ox: number; oy: number } | null>(null);
+  const [showControls, setShowControls] = useState(true);
+  const controlsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Render the project to a canvas image
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const canvas = await renderProject(project, { scale: 2 });
+        if (!cancelled) setCanvasUrl(canvas.toDataURL('image/png'));
+      } catch { /* fail silently */ }
+    })();
+    return () => { cancelled = true; };
+  }, [project]);
+
+  // Enter browser fullscreen on mount
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    try {
+      if (el.requestFullscreen) el.requestFullscreen();
+      else if ((el as any).webkitRequestFullscreen) (el as any).webkitRequestFullscreen();
+    } catch { /* fullscreen may not be available */ }
+
+    const onFsChange = () => {
+      if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
+        onExit();
+      }
+    };
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFsChange);
+      document.removeEventListener('webkitfullscreenchange', onFsChange);
+    };
+  }, []);
+
+  // Fit to screen on load
+  useEffect(() => {
+    if (!canvasUrl) return;
+    const img = new Image();
+    img.onload = () => {
+      const sw = window.screen.width || window.innerWidth;
+      const sh = window.screen.height || window.innerHeight;
+      const fitZoom = Math.min(sw / img.naturalWidth, sh / img.naturalHeight) * 0.9;
+      setPreviewZoom(clamp(fitZoom, 0.05, 5));
+      setPanX(0);
+      setPanY(0);
+    };
+    img.src = canvasUrl;
+  }, [canvasUrl]);
+
+  // ESC key handler
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        exitPreview();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // Auto-hide controls after 3s of inactivity
+  useEffect(() => {
+    const resetTimer = () => {
+      setShowControls(true);
+      if (controlsTimer.current) clearTimeout(controlsTimer.current);
+      controlsTimer.current = setTimeout(() => setShowControls(false), 3000);
+    };
+    resetTimer();
+    window.addEventListener('mousemove', resetTimer);
+    return () => {
+      window.removeEventListener('mousemove', resetTimer);
+      if (controlsTimer.current) clearTimeout(controlsTimer.current);
+    };
+  }, []);
+
+  const exitPreview = () => {
+    try {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else if ((document as any).webkitExitFullscreen) (document as any).webkitExitFullscreen();
+    } catch { /* ignore */ }
+    onExit();
+  };
+
+  // Zoom handlers
+  const zoomIn = () => setPreviewZoom(z => clamp(z * 1.25, 0.05, 10));
+  const zoomOut = () => setPreviewZoom(z => clamp(z * 0.8, 0.05, 10));
+  const zoomFit = () => {
+    if (!canvasUrl) return;
+    const img = new Image();
+    img.onload = () => {
+      const sw = window.innerWidth;
+      const sh = window.innerHeight;
+      const fitZ = Math.min(sw / img.naturalWidth, sh / img.naturalHeight) * 0.9;
+      setPreviewZoom(clamp(fitZ, 0.05, 5));
+      setPanX(0);
+      setPanY(0);
+    };
+    img.src = canvasUrl;
+  };
+
+  // Mouse wheel zoom
+  const onWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.1 : 0.9;
+    setPreviewZoom(z => clamp(z * factor, 0.05, 10));
+  };
+
+  // Drag to pan
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    dragRef.current = { sx: e.clientX, sy: e.clientY, ox: panX, oy: panY };
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!dragRef.current) return;
+    setPanX(dragRef.current.ox + (e.clientX - dragRef.current.sx));
+    setPanY(dragRef.current.oy + (e.clientY - dragRef.current.sy));
+  };
+  const onPointerUp = () => { dragRef.current = null; };
+
+  return (
+    <div
+      ref={containerRef}
+      className="fixed inset-0 z-[9999] bg-[#0a0b0e] cursor-grab active:cursor-grabbing select-none"
+      style={{ touchAction: 'none' }}
+      onWheel={onWheel}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+    >
+      {/* Rendered preview */}
+      <div
+        ref={canvasContainerRef}
+        className="absolute inset-0 flex items-center justify-center"
+        style={{ pointerEvents: 'none' }}
+      >
+        {canvasUrl ? (
+          <img
+            src={canvasUrl}
+            alt="Preview"
+            draggable={false}
+            style={{
+              transform: `translate(${panX}px, ${panY}px) scale(${previewZoom})`,
+              transformOrigin: 'center center',
+              maxWidth: 'none',
+              maxHeight: 'none',
+              imageRendering: previewZoom > 2 ? 'pixelated' : 'auto',
+              transition: dragRef.current ? 'none' : 'transform 0.15s ease-out',
+            }}
+          />
+        ) : (
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-2 border-acc border-t-transparent rounded-full animate-spin" />
+            <span className="text-xs text-mut" style={{ fontFamily: 'var(--font-mono)' }}>Rendering preview...</span>
+          </div>
+        )}
+      </div>
+
+      {/* Floating controls — auto-hide after 3s */}
+      <div
+        className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-2 rounded-2xl border border-white/10 shadow-2xl"
+        style={{
+          background: 'rgba(14,15,20,0.85)',
+          backdropFilter: 'blur(16px)',
+          opacity: showControls ? 1 : 0,
+          transition: 'opacity 0.3s ease',
+          pointerEvents: showControls ? 'auto' : 'none',
+        }}
+      >
+        <button className="preview-ctrl-btn" onClick={zoomOut} title="Zoom Out">
+          <IcZoomOut size={16} />
+        </button>
+        <span
+          className="text-[11px] w-12 text-center select-none"
+          style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-mut)' }}
+        >
+          {Math.round(previewZoom * 100)}%
+        </span>
+        <button className="preview-ctrl-btn" onClick={zoomIn} title="Zoom In">
+          <IcZoomIn size={16} />
+        </button>
+        <div className="w-px h-5 bg-white/10 mx-1" />
+        <button className="preview-ctrl-btn" onClick={zoomFit} title="Fit to Screen">
+          <IcFit size={16} />
+        </button>
+        <div className="w-px h-5 bg-white/10 mx-1" />
+        <button
+          className="preview-ctrl-btn px-3 text-[11px] font-medium"
+          onClick={exitPreview}
+          style={{ fontFamily: 'var(--font-mono)' }}
+        >
+          ESC
+        </button>
+      </div>
+
+      {/* Top-right close button (always visible on hover) */}
+      <button
+        className="absolute top-5 right-5 w-9 h-9 rounded-xl flex items-center justify-center border border-white/10 hover:bg-white/10 transition-all"
+        style={{
+          background: 'rgba(14,15,20,0.7)',
+          backdropFilter: 'blur(12px)',
+          opacity: showControls ? 1 : 0,
+          transition: 'opacity 0.3s ease',
+          pointerEvents: showControls ? 'auto' : 'none',
+        }}
+        onClick={exitPreview}
+        title="Exit Preview"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
     </div>
   );
 }

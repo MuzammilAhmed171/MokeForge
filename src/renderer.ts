@@ -605,6 +605,134 @@ function drawIcons(ctx: CanvasRenderingContext2D, p: Project) {
   }
 }
 
+/* ---------------- custom text boxes ---------------- */
+function drawTextBoxes(ctx: CanvasRenderingContext2D, p: Project) {
+  if (!p.textboxes || p.textboxes.length === 0) return;
+
+  const sorted = [...p.textboxes].sort((a, b) => (a.z ?? 0) - (b.z ?? 0));
+  const cw = p.canvas.w;
+  const ch = p.canvas.h;
+
+  for (const tb of sorted) {
+    if (!tb.text) continue;
+
+    const x = tb.x * cw;
+    const y = tb.y * ch;
+    const width = tb.width * cw;
+    const lineHeight = 1.4;
+    const fontSize = tb.fontSize;
+    const font = `${tb.fontWeight} ${fontSize}px ${tb.fontFamily}`;
+
+    ctx.save();
+    ctx.globalAlpha = tb.opacity;
+
+    // Apply rotation around the top-left corner of the text box
+    if (tb.rotation !== 0) {
+      ctx.translate(x, y);
+      ctx.rotate((tb.rotation * Math.PI) / 180);
+      ctx.translate(-x, -y);
+    }
+
+    // Measure text to determine block height
+    ctx.font = font;
+    const lines = wrapText(ctx, tb.text, width - tb.padding * 2);
+    const textBlockH = lines.length * fontSize * lineHeight;
+    const totalH = textBlockH + tb.padding * 2;
+
+    // Draw background
+    if (tb.bgType !== 'none') {
+      if (tb.bgType === 'solid') {
+        ctx.fillStyle = tb.bgColor;
+      } else if (tb.bgType === 'gradient') {
+        if (tb.bgGradient) {
+          // Parse simple linear gradient — fallback to solid
+          const grad = ctx.createLinearGradient(x, y, x + width, y + totalH);
+          grad.addColorStop(0, tb.bgColor + '88');
+          grad.addColorStop(1, tb.bgColor);
+          ctx.fillStyle = grad;
+        } else {
+          const grad = ctx.createLinearGradient(x, y, x + width, y + totalH);
+          grad.addColorStop(0, tb.bgColor + '88');
+          grad.addColorStop(1, tb.bgColor);
+          ctx.fillStyle = grad;
+        }
+      } else if (tb.bgType === 'glass') {
+        ctx.fillStyle = tb.bgColor + '33';
+      }
+
+      rr(ctx, x, y, width, totalH, tb.borderRadius);
+      ctx.fill();
+
+      // Glass border
+      if (tb.bgType === 'glass') {
+        ctx.strokeStyle = tb.bgColor + '66';
+        ctx.lineWidth = 1;
+        rr(ctx, x, y, width, totalH, tb.borderRadius);
+        ctx.stroke();
+      }
+    }
+
+    // Apply shadow
+    if (tb.shadow) {
+      ctx.shadowColor = 'rgba(0,0,0,0.3)';
+      ctx.shadowBlur = 12;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 4;
+    }
+
+    // Apply glow
+    if (tb.glow) {
+      ctx.shadowColor = tb.glowColor;
+      ctx.shadowBlur = 20;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+    }
+
+    // Draw text
+    ctx.fillStyle = tb.color;
+    ctx.font = font;
+    ctx.textBaseline = 'top';
+    ctx.textAlign = tb.align as CanvasTextAlign;
+
+    let textX: number;
+    if (tb.align === 'left') textX = x + tb.padding;
+    else if (tb.align === 'right') textX = x + width - tb.padding;
+    else textX = x + width / 2; // center
+
+    let textY = y + tb.padding;
+    for (const line of lines) {
+      ctx.fillText(line, textX, textY, width - tb.padding * 2);
+      textY += fontSize * lineHeight;
+    }
+
+    ctx.restore();
+  }
+}
+
+/** Word-wrap helper: splits text into lines that fit within maxWidth */
+function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+  if (maxWidth <= 0) return [text];
+  const paragraphs = text.split('\n');
+  const allLines: string[] = [];
+
+  for (const para of paragraphs) {
+    if (!para) { allLines.push(''); continue; }
+    const words = para.split(' ');
+    let currentLine = '';
+    for (const word of words) {
+      const testLine = currentLine ? currentLine + ' ' + word : word;
+      if (ctx.measureText(testLine).width > maxWidth && currentLine) {
+        allLines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    }
+    if (currentLine) allLines.push(currentLine);
+  }
+  return allLines.length ? allLines : [''];
+}
+
 /* ---------------- main ---------------- */
 export async function renderProject(p: Project, opts: { scale?: number; transparent?: boolean } = {}): Promise<HTMLCanvasElement> {
   await ensureFonts();
@@ -645,6 +773,10 @@ export async function renderProject(p: Project, opts: { scale?: number; transpar
 
   await drawLogo(ctx, p);
   drawTextBlock(ctx, p);
+
+  // Draw custom text boxes (from the Text tab in left panel)
+  drawTextBoxes(ctx, p);
+
   return canvas;
 }
 
