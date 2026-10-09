@@ -533,10 +533,24 @@ function drawIcons(ctx: CanvasRenderingContext2D, p: Project) {
     ctx.translate(-size / 2, -size / 2);
     
     // Draw background if enabled
-    if (icon.bgStyle !== 'none' && icon.bgColor) {
-      const bgColor = icon.bgColor;
-      const bgPadding = size * 0.2;
+    if (icon.bgStyle !== 'none') {
+      const bgColor = icon.bgColor || '#ffffff';
       
+      ctx.save();
+      // Apply shadow or glow to background shape
+      if (icon.shadow) {
+        ctx.shadowColor = 'rgba(0,0,0,0.32)';
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 4;
+      }
+      if (icon.glow) {
+        ctx.shadowColor = bgColor;
+        ctx.shadowBlur = 14;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+      }
+
       if (icon.bgStyle === 'circle') {
         ctx.fillStyle = bgColor;
         ctx.beginPath();
@@ -554,6 +568,12 @@ function drawIcons(ctx: CanvasRenderingContext2D, p: Project) {
         ctx.lineWidth = 1;
         rr(ctx, 0, 0, size, size, size * 0.2);
         ctx.stroke();
+
+        // Top specular shine
+        ctx.fillStyle = 'rgba(255,255,255,0.22)';
+        ctx.beginPath();
+        ctx.ellipse(size / 2, size * 0.2, size * 0.35, size * 0.12, 0, 0, Math.PI * 2);
+        ctx.fill();
       } else if (icon.bgStyle === 'gradient') {
         const grad = ctx.createLinearGradient(0, 0, size, size);
         grad.addColorStop(0, bgColor + '88');
@@ -566,6 +586,7 @@ function drawIcons(ctx: CanvasRenderingContext2D, p: Project) {
         rr(ctx, 0, 0, size, size, size * 0.08);
         ctx.fill();
       }
+      ctx.restore();
     }
     
     // Draw icon
@@ -583,7 +604,6 @@ function drawIcons(ctx: CanvasRenderingContext2D, p: Project) {
     
     // Parse and draw SVG path
     const path = new Path2D(iconDef.d);
-    ctx.stroke(path);
     
     // Add glow if enabled
     if (icon.glow) {
@@ -598,6 +618,8 @@ function drawIcons(ctx: CanvasRenderingContext2D, p: Project) {
       ctx.shadowBlur = 8;
       ctx.shadowOffsetX = 2;
       ctx.shadowOffsetY = 2;
+      ctx.stroke(path);
+    } else {
       ctx.stroke(path);
     }
     

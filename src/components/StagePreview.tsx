@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, PointerEvent as RPointerEvent, DragEvent as RDragEvent } from 'react';
 import { useStudio } from '../store';
 import type { Background, DeviceLayer, IconLayer as IconLayerType, Project } from '../types';
-import { clamp, computeFit, deviceGeometry, DEVICE_META, luminance, textOn, DECO_PRESETS } from '../templates';
+import { clamp, computeFit, deviceGeometry, DEVICE_META, luminance, textOn, DECO_PRESETS, SHADOWS } from '../templates';
 import { renderBackground } from '../backgrounds';
 import { drawDecos } from '../decos';
 import { DeviceFrame } from './DeviceFrame';
@@ -1457,6 +1457,13 @@ function DeviceNode({ d, guides, setGuides, setDistanceInfo, onDragStart, onDrag
     if (assetId) assignAsset(d.id, assetId);
   };
 
+  const sh = SHADOWS.find(s => s.id === d.shadow) ?? SHADOWS[1];
+  const shadowFilter = sh.alpha > 0 
+    ? (sh.id === 'glow'
+        ? `drop-shadow(0px ${sh.dy}px ${sh.blur}px ${p.accents.a1}aa)`
+        : `drop-shadow(${sh.dx}px ${sh.dy}px ${sh.blur}px rgba(0,0,0,${sh.alpha}))`)
+    : undefined;
+
   return (
     <div
       className="absolute cursor-move"
@@ -1469,6 +1476,7 @@ function DeviceNode({ d, guides, setGuides, setDistanceInfo, onDragStart, onDrag
         transform: `rotate(${d.tilt}deg)`, 
         display: d.visible ? undefined : 'none', 
         opacity: d.opacity ?? 1,
+        filter: shadowFilter,
         zIndex: d.z ?? p.devices.indexOf(d)
       }}
       onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}

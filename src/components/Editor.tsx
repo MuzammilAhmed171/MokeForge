@@ -501,12 +501,37 @@ function PreviewOverlay({ zoom, setZoom, onExit, project }: { zoom: number; setZ
     img.src = canvasUrl;
   };
 
-  // Mouse wheel zoom
-  const onWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const factor = e.deltaY < 0 ? 1.1 : 0.9;
-    setPreviewZoom(z => clamp(z * factor, 0.05, 10));
-  };
+  // Attach non-passive wheel listener to strictly prevent Chrome/browser zooming
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // Always prevent default browser pinch/page zoom
+      e.preventDefault();
+      e.stopPropagation();
+
+      // If user is pinching on trackpad (which fires wheel with ctrlKey) or scrolling
+      const factor = e.deltaY < 0 ? 1.12 : 0.88;
+      setPreviewZoom(z => clamp(z * factor, 0.05, 10));
+    };
+
+    const handleGesture = (e: Event) => {
+      e.preventDefault();
+    };
+
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    el.addEventListener('gesturestart', handleGesture, { passive: false });
+    el.addEventListener('gesturechange', handleGesture, { passive: false });
+    el.addEventListener('gestureend', handleGesture, { passive: false });
+
+    return () => {
+      el.removeEventListener('wheel', handleWheel);
+      el.removeEventListener('gesturestart', handleGesture);
+      el.removeEventListener('gesturechange', handleGesture);
+      el.removeEventListener('gestureend', handleGesture);
+    };
+  }, []);
 
   // Drag to pan
   const onPointerDown = (e: React.PointerEvent) => {
@@ -526,7 +551,6 @@ function PreviewOverlay({ zoom, setZoom, onExit, project }: { zoom: number; setZ
       ref={containerRef}
       className="fixed inset-0 z-[9999] bg-[#0a0b0e] cursor-grab active:cursor-grabbing select-none"
       style={{ touchAction: 'none' }}
-      onWheel={onWheel}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
